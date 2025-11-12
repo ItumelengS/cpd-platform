@@ -1,0 +1,57 @@
+TASK 08: Final Quiz & Certificates
+Time: 35 minutes
+Claude Code Prompt
+Create final quiz and certificate generation:
+
+1. app/learn/[courseSlug]/quiz/page.tsx:
+   - Display all final quiz questions for course
+   - Show one at a time OR all at once (your choice)
+   - Track attempt number (max 3)
+   - Use same secure validation as section quizzes
+   - Calculate score from all answers
+   - Show results: "You scored X/10 (Y%)"
+   - If score >= 70%: "Generate Certificate" button
+   - If score < 70%: "Try Again" button (if attempts < 3)
+   - If attempts >= 3: "Maximum attempts reached"
+   - Display attempt counter: "Attempt 1 of 3"
+
+2. app/api/quiz/submit-final/route.ts:
+   - POST endpoint
+   - Verify authenticated
+   - Fetch all QuizAttempts for user + course final questions
+   - Calculate score: correct / total * 100
+   - Validate score >= 70% for pass
+   - Update Enrollment.completedAt if passed
+   - Return: { score, passed, attempts }
+
+3. app/api/certificates/generate/route.ts:
+   - POST endpoint
+   - Verify authenticated
+   - Check course completed (Enrollment.completedAt exists)
+   - Check score >= 70%
+   - Generate unique certificate ID: CERT-{timestamp}-{random}
+   - Create Certificate record
+   - Return certificate data
+
+4. components/Certificate.tsx:
+   - Professional certificate design
+   - Border, decorative elements
+   - Display: user name, course title, CPD hours, date, certificate ID, score
+   - "@media print" CSS for printing
+   - "Print Certificate" button
+
+5. app/dashboard/certificates/page.tsx:
+   - List all user certificates
+   - Each certificate: course name, date, score, certificate ID
+   - "View Certificate" button
+
+Use same security as section quizzes.
+Verification
+bash# Complete course
+# Take final quiz
+# Score 70%+
+# Generate certificate
+# Print certificate
+Commit
+bashgit add .
+git commit -m "feat: add final quiz and certificate generation"

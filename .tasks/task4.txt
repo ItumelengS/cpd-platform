@@ -1,0 +1,93 @@
+TASK 04: Homepage
+Time: 25 minutes
+Claude Code Prompt
+Create a professional homepage at app/(marketing)/page.tsx with:
+
+STRUCTURE:
+1. Navigation Bar (sticky):
+   - Logo: "RadSciCPD" (clickable, links to /)
+   - Nav links: Courses, How It Works, Pricing, About  
+   - Auth buttons: Login, Start Free Trial
+   - Mobile: Hamburger menu
+
+2. Hero Section:
+   - Headline: "Professional CPD for Radiation Sciences"
+   - Subheading: "Evidence-based continuing education for radiographers, radiotherapists, nuclear medicine professionals, and medical physicists. Flexible, affordable, and accredited."
+   - 2 CTA buttons: "Start Free Trial" (primary), "Browse Courses" (secondary)
+   - Trust badges (3 items with icons):
+     * ✓ Accredited CPD - Professional credits recognized
+     * 📚 Evidence-Based - Peer-reviewed research
+     * ⏰ Learn at Your Pace - 24/7 access, mobile-friendly
+   - Gradient blue background
+
+3. Stats Section (4 stat cards):
+   - 50+ Courses Available
+   - 2,000+ Healthcare Professionals Trained
+   - 100+ CPD Hours of Content
+   - 4.8/5 Average Course Rating
+   - Light gray background
+
+4. Course Categories (6 cards in grid):
+   - Diagnostic Imaging 📊 (15 courses)
+   - Radiotherapy ⚡ (12 courses)
+   - Nuclear Medicine ☢️ (8 courses)
+   - Radiation Protection 🛡️ (10 courses)
+   - Radiobiology 🔬 (7 courses)
+   - Medical Physics 🔧 (8 courses)
+   - Each card: icon, title, description, course count
+   - Hover effect: lift + border color
+
+5. Features Section (6 features with icons):
+   - 🎓 Accredited CPD Credits
+   - 📱 Learn Anywhere, Anytime
+   - ✅ Interactive Assessments
+   - 📚 Evidence-Based Content
+   - 💰 Affordable Pricing
+   - 🔒 Secure & Compliant
+   - Light gray background
+
+6. How It Works (4 steps):
+   - Step 1: Create Account
+   - Step 2: Choose Courses
+   - Step 3: Learn & Complete
+   - Step 4: Get Certified
+   - Numbered circles with descriptions
+
+7. Testimonials (3 cards):
+   - Create 3 realistic testimonials with:
+     * 5-star rating
+     * Quote text
+     * Avatar (initials in circle)
+     * Name and role
+   - Light gray background
+
+8. Final CTA Section:
+   - Heading: "Start Your Professional Development Journey Today"
+   - Subtext: "Join 2,000+ healthcare professionals..."
+   - Buttons: "Start 14-Day Free Trial", "Request Demo"
+   - Note: "No credit card required • Cancel anytime"
+   - Blue gradient background
+
+9. Footer:
+   - 4 columns: About, Courses (links to categories), Company links, Support
+   - Copyright notice
+   - Dark background
+
+DESIGN:
+- Use Tailwind CSS
+- Color scheme: Primary #2563eb (blue), Secondary #10b981 (green)
+- Fully responsive (hamburger menu on mobile)
+- Modern, clean, professional
+- Smooth scroll for anchor links
+- All buttons should have hover effects
+
+Create reusable components if needed.
+Verification
+bashpnpm dev
+# Visit http://localhost:3000
+# Check all sections render
+# Test mobile menu
+# Test navigation
+Commit
+bashgit add .
+git commit -m "feat: create professional marketing homepage"

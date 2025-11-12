@@ -1,0 +1,90 @@
+TASK 07: SECURE Quiz System
+Time: 45 minutes ⚠️ MOST CRITICAL TASK
+Claude Code Prompt
+Create course learning interface with SECURE quiz validation:
+
+1. app/learn/[courseSlug]/[sectionId]/page.tsx:
+   - Fetch section by ID with course and questions
+   - Display section content (markdown or HTML)
+   - Client-side timer tracking time spent (useState with Date.now())
+   - Section quiz component at bottom
+   - Progress indicator: "Section X of Y"
+   - "Next Section" button (disabled until minimum time + quiz complete)
+   - Countdown shows time remaining if minimum not met
+
+2. components/QuizQuestion.tsx:
+   - Props: questionId, questionText, context, optionA-D
+   - DO NOT include correctAnswer in props
+   - 4 option buttons (A, B, C, D)
+   - "Submit Answer" button
+   - On submit: call API /api/quiz/check-answer
+   - Show loading state during API call
+   - Display feedback: "Correct!" or "Incorrect" after response
+   - Show explanation if provided
+   - Disable question after correct answer
+
+3. app/api/quiz/check-answer/route.ts (MOST CRITICAL):
+   - POST endpoint
+   - Verify user authenticated (getServerSession)
+   - Validate input: { questionId, answer, timeSpent }
+   - Fetch question from database with correctAnswer field
+   - Compare user answer to correct answer
+   - Log attempt in QuizAttempt table
+   - Check for suspicious patterns (>20 attempts/hour, 100% accuracy, <1 sec/question)
+   - Return ONLY: { isCorrect: boolean, explanation?: string }
+   - NEVER return correctAnswer to client
+
+4. app/api/progress/update/route.ts:
+   - POST endpoint
+   - Verify authenticated
+   - Receive: { sectionId, timeSpent }
+   - Validate minimum time met (server-side check)
+   - Create/update Progress record
+   - Mark section completed
+   - Return success
+
+5. Client-side time enforcement:
+   - Track startTime when section loads
+   - On "Next" click, check elapsed time
+   - If < minimum, show alert with countdown
+   - Send timeSpent to server for validation
+
+SECURITY CRITICAL:
+- Question.correctAnswer field NEVER sent to client
+- All validation happens server-side
+- Log all attempts for anti-cheating
+- Rate limiting for suspicious activity
+⚠️ SECURITY VERIFICATION (MANDATORY)
+After Claude Code completes, you MUST verify:
+bash# 1. Start dev server
+pnpm dev
+
+# 2. Go to any quiz page
+
+# 3. Open DevTools (F12)
+
+# 4. Press Ctrl+Shift+F (search all sources)
+
+# 5. Search for: "correctAnswer"
+
+# EXPECTED: ❌ NO RESULTS FOUND
+
+# If you find "correctAnswer" in client code:
+# ❌ SECURITY FAILURE - STOP AND FIX!
+
+# 6. Test API without auth:
+curl -X POST http://localhost:3000/api/quiz/check-answer \
+  -H "Content-Type: application/json" \
+  -d '{"questionId":"test","answer":"A"}'
+
+# EXPECTED: 401 Unauthorized
+
+# 7. Check Network tab
+# Submit a quiz answer
+# Look at API response
+# Should ONLY see: {"isCorrect": true/false}
+# Should NOT see: "correctAnswer"
+DO NOT PROCEED TO TASK 08 UNTIL SECURITY IS VERIFIED!
+Commit
+bashgit add .
+git commit -m "feat: add secure course player and quiz system"

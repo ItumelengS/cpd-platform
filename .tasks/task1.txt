@@ -1,0 +1,64 @@
+Initialize a new Next.js 14 project with TypeScript, Tailwind CSS, and App Router. 
+
+Requirements:
+- Use create-next-app with latest version
+- Enable TypeScript
+- Enable Tailwind CSS
+- Use App Router (not pages router)
+- Add ESLint
+- Use pnpm as package manager
+
+After initialization, install these additional dependencies:
+
+Production dependencies:
+- prisma
+- @prisma/client
+- next-auth
+- bcryptjs
+- zod
+- react-hook-form
+- @hookform/resolvers
+
+Dev dependencies:
+- @types/bcryptjs
+- tsx
+
+After installation, create this folder structure:
+
+cpd-platform/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/
+│   │   └── signup/
+│   ├── (marketing)/
+│   │   └── courses/
+│   ├── dashboard/
+│   ├── learn/
+│   ├── api/
+│   │   ├── auth/
+│   │   ├── quiz/
+│   │   ├── progress/
+│   │   └── certificates/
+│   └── admin/
+├── components/
+│   └── ui/
+├── lib/
+└── prisma/
+
+Create empty .gitkeep files in each directory so they're tracked by git.
+
+Show me the completed file structure and package.json when done.
+Verification
+bash# Check folders exist
+ls -la app/
+
+# Verify dependencies
+cat package.json
+
+# Start dev server
+pnpm dev
+
+# Should start without errors
+Commit
+bashgit add .
+git commit -m "feat: initialize Next.js project with folder structure"

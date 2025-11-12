@@ -1,0 +1,42 @@
+TASK 05: Course Browsing
+Time: 30 minutes
+Claude Code Prompt
+Create course browsing pages:
+
+1. app/(marketing)/courses/page.tsx:
+   - Fetch all published courses from database using Prisma
+   - Display as grid of course cards (3 columns desktop, 1 mobile)
+   - Filter tabs by category at top
+   - Each card: thumbnail placeholder, title, category badge, CPD hours, difficulty, price, "View Course" button
+   - Use server components for data fetching
+
+2. app/(marketing)/courses/[slug]/page.tsx:
+   - Fetch course by slug with sections and category
+   - Show: title, description, category, CPD hours, difficulty, source article citation
+   - "What You'll Learn" section with learning objectives
+   - Course outline showing all sections
+   - "Enroll in Course" button (requires auth, checks if already enrolled)
+   - If enrolled, show "Continue Learning" button linking to first incomplete section
+
+3. components/CourseCard.tsx:
+   - Reusable card component
+   - Props: course data
+   - Hover: lift effect, shadow
+   - Link to course detail page
+
+4. lib/actions/courses.ts (server actions):
+   - getAllCourses(): fetch published courses with category
+   - getCourseBySlug(slug): fetch course with sections
+   - enrollInCourse(userId, courseId): create enrollment record
+   - All with error handling
+
+Use Tailwind CSS matching homepage design.
+Add loading states with skeleton UI.
+Verification
+bash# Visit /courses
+# See course grid
+# Click course → see details
+# Enroll button works (after login)
+Commit
+bashgit add .
+git commit -m "feat: add course browsing and enrollment"

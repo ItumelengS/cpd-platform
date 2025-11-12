@@ -1,0 +1,42 @@
+TASK 10: Seed Database
+Time: 20 minutes
+Claude Code Prompt
+Create database seed file with sample data:
+
+prisma/seed.ts:
+
+1. Create 6 categories:
+   - Diagnostic Imaging, Radiotherapy, Nuclear Medicine, 
+     Radiation Protection, Radiobiology, Medical Physics
+
+2. Create 2 complete courses:
+
+Course 1: "AI in Diagnostic Radiology"
+- Category: Diagnostic Imaging
+- 5 sections (400-800 words each)
+- 2 questions per section
+- 10 final quiz questions
+- CPD hours: 2.0
+- Source: "Bhandari et al. (Cureus, 2024, CC BY 4.0)"
+
+Course 2: "Radiation Protection Principles"
+- Category: Radiation Protection
+- 4 sections
+- 2 questions per section
+- 10 final quiz questions
+- CPD hours: 1.5
+
+3. Create users:
+   - Admin: admin@example.com, password: admin123 (hashed)
+   - User: user@example.com, password: password123 (hashed)
+
+Add package.json script: "seed": "tsx prisma/seed.ts"
+
+Content should be realistic, professional, accurate.
+Verification
+bashpnpm run seed
+# Check courses created
+# Login with test accounts
+Commit
+bashgit add .
+git commit -m "feat: add database seed"

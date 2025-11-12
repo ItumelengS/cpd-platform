@@ -1,0 +1,46 @@
+TASK 09: Admin Interface
+Time: 40 minutes
+Claude Code Prompt
+Create admin panel for course management:
+
+1. Middleware update:
+   - Ensure /admin/* routes check: token?.role === "ADMIN"
+
+2. app/admin/layout.tsx:
+   - Admin sidebar: Courses, Users, Analytics
+   - Different styling from user dashboard
+
+3. app/admin/courses/page.tsx:
+   - List all courses (published + unpublished)
+   - Table view: Title, Category, Published, CPD Hours, Actions
+   - Actions: Edit, Delete, Toggle Published
+   - "Create New Course" button
+
+4. app/admin/courses/new/page.tsx:
+   - Form: title, slug, description, category, CPD hours, difficulty, price
+   - Zod validation
+   - On submit: create course, redirect to edit page
+
+5. app/admin/courses/[id]/edit/page.tsx:
+   - Edit course details
+   - Section management: add/edit sections
+   - Question management: add questions to sections
+   - Rich text editor for content (textarea for now)
+
+6. lib/actions/admin.ts (server actions):
+   - createCourse(data)
+   - updateCourse(id, data)
+   - deleteCourse(id)
+   - createSection(courseId, data)
+   - createQuestion(sectionId, data)
+
+Professional admin UI with Tailwind.
+Verification
+bash# Login as admin
+# Access /admin
+# Create course
+# Add sections
+# Add questions
+Commit
+bashgit add .
+git commit -m "feat: add admin interface"

@@ -1,0 +1,42 @@
+TASK 06: User Dashboard
+Time: 25 minutes
+Claude Code Prompt
+Create user dashboard:
+
+1. app/dashboard/layout.tsx:
+   - Sidebar: Dashboard, My Courses, Certificates, Settings links
+   - Top bar: User name, avatar (initials), logout button
+   - Main content area
+   - Mobile: hamburger menu sidebar
+
+2. app/dashboard/page.tsx:
+   - Requires authentication (middleware handles this)
+   - Fetch user's enrollments, certificates, progress
+   - Display 4 stat cards:
+     * Enrolled Courses (count)
+     * Completed Courses (count)
+     * Total CPD Hours Earned (sum)
+     * Certificates Earned (count)
+   - "My Courses" section: grid of enrolled courses with progress bars
+   - "Continue Learning" section: courses in progress with "Resume" button
+   - Recent certificates list
+
+3. components/ProgressBar.tsx:
+   - Visual progress bar component
+   - Props: percentage, color, height
+   - Animated fill
+
+4. components/StatCard.tsx:
+   - Stat display with icon, number, label
+   - Props: icon, value, label, color
+
+Use server components for data fetching.
+Professional, clean Tailwind design.
+Verification
+bash# Login and go to /dashboard
+# See stats
+# See enrolled courses
+# Progress bars display
+Commit
+bashgit add .
+git commit -m "feat: add user dashboard"

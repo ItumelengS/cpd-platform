@@ -1,0 +1,76 @@
+TASK 03: Authentication
+Time: 30 minutes
+Claude Code Prompt
+Set up NextAuth.js v5 (Auth.js) authentication system with:
+
+1. Create lib/auth.ts with:
+   - Google OAuth provider (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
+   - Credentials provider for email/password login
+   - Password hashing with bcrypt (12 rounds)
+   - JWT session strategy
+   - Session callback to include user.id and user.role
+   - Custom pages: signIn: "/login"
+   - Callbacks to add role to JWT and session
+
+2. Create app/api/auth/[...nextauth]/route.ts:
+   - Import authOptions from lib/auth.ts
+   - Export GET and POST handlers using NextAuth
+
+3. Create middleware.ts to protect routes:
+   - Protect /dashboard/* (requires authentication)
+   - Protect /learn/* (requires authentication)
+   - Protect /admin/* (requires authentication AND role === ADMIN)
+   - Allow public access to: /, /courses/*, /login, /signup, /api/auth/*
+   - Redirect unauthenticated users to /login
+
+4. Create app/(auth)/login/page.tsx:
+   - Email and password input fields
+   - "Sign in with Google" button
+   - "Sign in" submit button
+   - Link to /signup ("Don't have an account?")
+   - Use react-hook-form with Zod validation
+   - Call signIn() from next-auth/react
+   - Show error messages for failed login
+   - Redirect to /dashboard on success
+   - Professional design with Tailwind CSS
+
+5. Create app/(auth)/signup/page.tsx:
+   - Name, email, password, confirm password fields
+   - Zod validation: email format, password min 8 chars, passwords match
+   - Hash password with bcrypt before saving
+   - Create user in database using Prisma
+   - Auto sign-in after successful signup
+   - Redirect to /dashboard
+   - Link to /login ("Already have an account?")
+   - Show validation errors inline
+   - Professional design with Tailwind CSS
+
+6. Create app/(auth)/layout.tsx:
+   - Centered auth form container
+   - Logo at top
+   - Max width 400px
+   - Clean, professional styling
+
+7. Update .env.example:
+   - Add NEXTAUTH_SECRET (with comment: generate with: openssl rand -base64 32)
+   - Add NEXTAUTH_URL=http://localhost:3000
+   - Add GOOGLE_CLIENT_ID=your_google_client_id
+   - Add GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+Use TypeScript strict mode.
+All forms should have loading states and error handling.
+Password inputs should have "show/hide password" toggle.
+Verification
+bash# Generate secret
+openssl rand -base64 32
+# Add to .env
+
+# Test
+pnpm dev
+# Go to /signup, create account
+# Go to /login, login
+# Try /dashboard - should work
+# Try /admin - should be blocked
+Commit
+bashgit add .
+git commit -m "feat: implement NextAuth.js authentication"

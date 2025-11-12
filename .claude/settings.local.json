@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm create:*)",
+      "Bash(npm install:*)",
+      "Bash(npx pnpm create:*)",
+      "Bash(rm:*)",
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(whereis:*)",
+      "Bash(pnpm --version:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(yes:*)",
+      "Bash(rsync:*)",
+      "Bash(cat:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(tree:*)",
+      "Bash(timeout 10 pnpm dev:*)",
+      "Bash(pnpm dev)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

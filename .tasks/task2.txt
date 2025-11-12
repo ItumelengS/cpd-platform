@@ -1,0 +1,134 @@
+TASK 02: Database Schema
+Time: 20 minutes
+Claude Code Prompt
+Create the Prisma schema for my CPD platform with these requirements:
+
+Create prisma/schema.prisma with the following models:
+
+1. User model:
+   - id (String, @id, @default(cuid()))
+   - email (String, @unique)
+   - name (String, optional)
+   - password (String, optional for OAuth users)
+   - role (Role enum: USER, ADMIN, INSTRUCTOR, default USER)
+   - specialty (String, optional)
+   - institution (String, optional)
+   - country (String, optional)
+   - createdAt (DateTime, @default(now()))
+   - updatedAt (DateTime, @updatedAt)
+   - Relations: enrollments[], attempts[], certificates[], progress[]
+
+2. Category model:
+   - id (String, @id, @default(cuid()))
+   - name (String, @unique)
+   - slug (String, @unique)
+   - description (String, optional)
+   - icon (String, optional - for emoji)
+   - order (Int, @default(0))
+   - Relations: courses[]
+
+3. Course model:
+   - id (String, @id, @default(cuid()))
+   - title (String)
+   - slug (String, @unique)
+   - description (String)
+   - thumbnail (String, optional)
+   - categoryId (String)
+   - category (Category relation)
+   - cpdHours (Float - e.g., 2.0)
+   - difficulty (String - Beginner/Intermediate/Advanced)
+   - sourceArticle (String, optional - DOI or citation)
+   - published (Boolean, @default(false))
+   - price (Float, @default(0))
+   - createdAt (DateTime, @default(now()))
+   - updatedAt (DateTime, @updatedAt)
+   - Relations: sections[], enrollments[], certificates[]
+
+4. Section model:
+   - id (String, @id, @default(cuid()))
+   - courseId (String)
+   - course (Course relation with onDelete: Cascade)
+   - title (String)
+   - content (String, @db.Text)
+   - order (Int)
+   - minTimeSeconds (Int, @default(300))
+   - Relations: questions[], progress[]
+
+5. Question model:
+   - id (String, @id, @default(cuid()))
+   - sectionId (String, optional)
+   - section (Section relation, optional, with onDelete: Cascade)
+   - courseId (String)
+   - questionText (String, @db.Text)
+   - context (String, @db.Text, optional)
+   - optionA (String)
+   - optionB (String)
+   - optionC (String)
+   - optionD (String)
+   - correctAnswer (String - 'A', 'B', 'C', or 'D')
+   - explanation (String, @db.Text, optional)
+   - order (Int)
+   - Relations: attempts[]
+
+6. Enrollment model:
+   - id (String, @id, @default(cuid()))
+   - userId (String)
+   - user (User relation with onDelete: Cascade)
+   - courseId (String)
+   - course (Course relation with onDelete: Cascade)
+   - enrolledAt (DateTime, @default(now()))
+   - completedAt (DateTime, optional)
+   - @@unique([userId, courseId])
+
+7. Progress model:
+   - id (String, @id, @default(cuid()))
+   - userId (String)
+   - user (User relation with onDelete: Cascade)
+   - sectionId (String)
+   - section (Section relation with onDelete: Cascade)
+   - completed (Boolean, @default(false))
+   - timeSpent (Int, @default(0) - in seconds)
+   - startedAt (DateTime, @default(now()))
+   - completedAt (DateTime, optional)
+   - @@unique([userId, sectionId])
+
+8. QuizAttempt model:
+   - id (String, @id, @default(cuid()))
+   - userId (String)
+   - user (User relation with onDelete: Cascade)
+   - questionId (String)
+   - question (Question relation with onDelete: Cascade)
+   - answer (String - 'A', 'B', 'C', or 'D')
+   - isCorrect (Boolean)
+   - attemptNumber (Int, @default(1))
+   - timeSpent (Int, optional - in milliseconds)
+   - createdAt (DateTime, @default(now()))
+   - @@index([userId, questionId])
+
+9. Certificate model:
+   - id (String, @id, @default(cuid()))
+   - userId (String)
+   - user (User relation with onDelete: Cascade)
+   - courseId (String)
+   - course (Course relation)
+   - certificateId (String, @unique - public certificate ID)
+   - score (Float - percentage)
+   - issuedAt (DateTime, @default(now()))
+   - @@unique([userId, courseId])
+
+Also create:
+1. lib/prisma.ts with Prisma client singleton pattern (to prevent multiple instances in development)
+2. .env.example with DATABASE_URL template
+
+Use PostgreSQL as the database provider.
+
+IMPORTANT: Add comment above Question.correctAnswer field:
+// SECURITY: This field must NEVER be exposed to client-side code
+Verification
+bashcat prisma/schema.prisma
+cat lib/prisma.ts
+cp .env.example .env
+npx prisma generate
+Commit
+bashgit add .
+git commit -m "feat: add Prisma schema with all models"

@@ -1,0 +1,39 @@
+TASK 12: Security Audit
+Time: 25 minutes
+Claude Code Prompt
+Perform security audit:
+
+1. Review all API routes for:
+   - Authentication required?
+   - Input validated?
+   - Correct answers never sent to client?
+
+2. Add rate limiting to quiz endpoints:
+   - 30 submissions per hour per user
+   - Return 429 if exceeded
+
+3. Add suspicious activity detection:
+   - Flag: >20 answers in 5 min with 100% accuracy
+   - Flag: <1 sec average per question
+   - Log to console
+
+4. Create SECURITY.md documenting:
+   - Quiz answer security
+   - Authentication flow
+   - Anti-cheating measures
+   - Security checklist
+
+5. Create lib/security.ts with helper functions
+
+Review every API route systematically.
+FINAL SECURITY VERIFICATION
+bash# Open DevTools
+# Search for "correctAnswer"
+# Result: NOTHING ✅
+
+# Test API without auth
+curl -X POST http://localhost:3000/api/quiz/check-answer
+# Result: 401 Unauthorized ✅
+Commit
+bashgit add .
+git commit -m "security: add audit and rate limiting"
