@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  INSTRUCTOR
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  password     String?       // Optional for OAuth users
+  role         Role          @default(USER)
+  specialty    String?
+  institution  String?
+  country      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  enrollments  Enrollment[]
+  attempts     QuizAttempt[]
+  certificates Certificate[]
+  progress     Progress[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  // For emoji
+  order       Int      @default(0)
+
+  // Relations
+  courses     Course[]
+}
+
+model Course {
+  id            String        @id @default(cuid())
+  title         String
+  slug          String        @unique
+  description   String
+  thumbnail     String?
+  categoryId    String
+  category      Category      @relation(fields: [categoryId], references: [id])
+  cpdHours      Float         // e.g., 2.0
+  difficulty    String        // Beginner/Intermediate/Advanced
+  sourceArticle String?       // DOI or citation
+  published     Boolean       @default(false)
+  price         Float         @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  sections      Section[]
+  enrollments   Enrollment[]
+  certificates  Certificate[]
+}
+
+model Section {
+  id             String     @id @default(cuid())
+  courseId       String
+  course         Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title          String
+  content        String     @db.Text
+  order          Int
+  minTimeSeconds Int        @default(300)
+
+  // Relations
+  questions      Question[]
+  progress       Progress[]
+}
+
+model Question {
+  id           String        @id @default(cuid())
+  sectionId    String?
+  section      Section?      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  courseId     String
+  questionText String        @db.Text
+  context      String?       @db.Text
+  optionA      String
+  optionB      String
+  optionC      String
+  optionD      String
+  // SECURITY: This field must NEVER be exposed to client-side code
+  correctAnswer String       // 'A', 'B', 'C', or 'D'
+  explanation  String?       @db.Text
+  order        Int
+
+  // Relations
+  attempts     QuizAttempt[]
+}
+
+model Enrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+
+  @@unique([userId, courseId])
+}
+
+model Progress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sectionId   String
+  section     Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  completed   Boolean   @default(false)
+  timeSpent   Int       @default(0) // in seconds
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@unique([userId, sectionId])
+}
+
+model QuizAttempt {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer        String   // 'A', 'B', 'C', or 'D'
+  isCorrect     Boolean
+  attemptNumber Int      @default(1)
+  timeSpent     Int?     // in milliseconds
+  createdAt     DateTime @default(now())
+
+  @@index([userId, questionId])
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
+  certificateId String   @unique // public certificate ID
+  score         Float    // percentage
+  issuedAt      DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
