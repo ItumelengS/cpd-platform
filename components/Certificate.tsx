@@ -1,3 +1,5 @@
+"use client"
+
 import { Certificate as CertificateType, Course, User } from "@prisma/client"
 
 type CertificateProps = {
