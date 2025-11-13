@@ -17,7 +17,7 @@ export default function Certificate({ certificate }: CertificateProps) {
   })
 
   return (
-    <div className="bg-white p-12 max-w-4xl mx-auto shadow-2xl border-8 border-double border-blue-600 relative">
+    <div className="bg-white p-12 print:p-12 max-w-4xl mx-auto shadow-2xl border-8 border-double border-blue-600 relative">
       {/* Decorative corners */}
       <div className="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 border-blue-400"></div>
       <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-blue-400"></div>
@@ -77,18 +77,6 @@ export default function Certificate({ certificate }: CertificateProps) {
           </p>
         </div>
       </div>
-
-      {/* Print Styles */}
-      <style jsx>{`
-        @media print {
-          .bg-white {
-            padding: 3rem;
-          }
-          button {
-            display: none;
-          }
-        }
-      `}</style>
     </div>
   )
 }

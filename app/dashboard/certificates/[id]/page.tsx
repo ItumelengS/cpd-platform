@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import Certificate from "@/components/Certificate"
+import { PrintButton, ShareButtons } from "./CertificateActions"
 
 export default async function CertificateViewPage({
   params,
@@ -48,12 +49,7 @@ export default async function CertificateViewPage({
           ← Back to Certificates
         </Link>
 
-        <button
-          onClick={() => window.print()}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium print:hidden"
-        >
-          🖨️ Print Certificate
-        </button>
+        <PrintButton />
       </div>
 
       <Certificate certificate={certificate} />
@@ -63,14 +59,7 @@ export default async function CertificateViewPage({
         <p className="text-gray-700 text-sm mb-4">
           Share your certificate on LinkedIn, add it to your CV, or submit it to your professional body.
         </p>
-        <div className="flex gap-4">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
-            Share on LinkedIn
-          </button>
-          <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm font-medium">
-            Download PDF
-          </button>
-        </div>
+        <ShareButtons />
       </div>
     </div>
   )
