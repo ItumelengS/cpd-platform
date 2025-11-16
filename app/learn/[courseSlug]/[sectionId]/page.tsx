@@ -124,6 +124,7 @@ export default async function SectionLearnPage({
           content: section.content,
           minTimeSeconds: section.minTimeSeconds,
         }}
+        courseId={section.course.id}
         questions={section.questions}
         nextSectionId={nextSection?.id}
         courseSlug={courseSlug}

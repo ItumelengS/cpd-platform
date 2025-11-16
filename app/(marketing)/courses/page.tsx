@@ -1,5 +1,6 @@
 import { getAllCourses } from "@/lib/actions/courses"
 import CourseCard from "@/components/CourseCard"
+import AdUnit from "@/components/AdUnit"
 import Link from "next/link"
 
 export default async function CoursesPage() {
@@ -80,8 +81,20 @@ export default async function CoursesPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
-              <CourseCard key={course.id} course={course} />
+            {courses.map((course, index) => (
+              <>
+                <CourseCard key={course.id} course={course} />
+                {/* Add ad unit after every 6 courses */}
+                {(index + 1) % 6 === 0 && index !== courses.length - 1 && (
+                  <div className="md:col-span-2 lg:col-span-3" key={`ad-${index}`}>
+                    <AdUnit
+                      slot="1234567890"
+                      format="horizontal"
+                      className="my-4"
+                    />
+                  </div>
+                )}
+              </>
             ))}
           </div>
         )}

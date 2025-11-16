@@ -14,6 +14,16 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
+  ageVerified: z.boolean().refine((val) => val === true, {
+    message: "You must be at least 13 years old to create an account",
+  }),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "You must accept the Terms of Service",
+  }),
+  privacyAccepted: z.boolean().refine((val) => val === true, {
+    message: "You must accept the Privacy Policy",
+  }),
+  marketingEmails: z.boolean().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -52,6 +62,10 @@ export default function SignupPage() {
           name: data.name,
           email: data.email,
           password: hashedPassword,
+          ageVerified: data.ageVerified,
+          termsAccepted: data.termsAccepted,
+          privacyAccepted: data.privacyAccepted,
+          marketingEmails: data.marketingEmails || false,
         }),
       })
 
@@ -176,6 +190,74 @@ export default function SignupPage() {
           {errors.confirmPassword && (
             <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>
           )}
+        </div>
+
+        {/* Consent Checkboxes */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-start">
+            <input
+              {...register("ageVerified")}
+              type="checkbox"
+              id="ageVerified"
+              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="ageVerified" className="ml-3 text-sm text-gray-700">
+              I confirm that I am at least 13 years old *
+            </label>
+          </div>
+          {errors.ageVerified && (
+            <p className="text-red-500 text-sm ml-7">{errors.ageVerified.message}</p>
+          )}
+
+          <div className="flex items-start">
+            <input
+              {...register("termsAccepted")}
+              type="checkbox"
+              id="termsAccepted"
+              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="termsAccepted" className="ml-3 text-sm text-gray-700">
+              I agree to the{" "}
+              <Link href="/legal/terms" target="_blank" className="text-blue-600 hover:underline">
+                Terms of Service
+              </Link>{" "}
+              *
+            </label>
+          </div>
+          {errors.termsAccepted && (
+            <p className="text-red-500 text-sm ml-7">{errors.termsAccepted.message}</p>
+          )}
+
+          <div className="flex items-start">
+            <input
+              {...register("privacyAccepted")}
+              type="checkbox"
+              id="privacyAccepted"
+              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="privacyAccepted" className="ml-3 text-sm text-gray-700">
+              I agree to the{" "}
+              <Link href="/legal/privacy" target="_blank" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </Link>{" "}
+              *
+            </label>
+          </div>
+          {errors.privacyAccepted && (
+            <p className="text-red-500 text-sm ml-7">{errors.privacyAccepted.message}</p>
+          )}
+
+          <div className="flex items-start">
+            <input
+              {...register("marketingEmails")}
+              type="checkbox"
+              id="marketingEmails"
+              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="marketingEmails" className="ml-3 text-sm text-gray-700">
+              I want to receive email notifications about courses, updates, and platform news (optional)
+            </label>
+          </div>
         </div>
 
         <button

@@ -1,6 +1,34 @@
 import Link from "next/link"
+import { prisma } from "@/lib/prisma"
+import Image from "next/image"
+import SearchBar from "@/components/SearchBar"
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Fetch trending courses (most viewed this week)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const trendingCourses = await prisma.course.findMany({
+    where: {
+      status: 'Published',
+      updatedAt: {
+        gte: sevenDaysAgo,
+      },
+    },
+    include: {
+      creator: {
+        select: {
+          name: true,
+          image: true,
+        },
+      },
+    },
+    orderBy: {
+      totalViews: 'desc',
+    },
+    take: 6,
+  });
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -15,6 +43,9 @@ export default function HomePage() {
             <div className="hidden md:flex items-center space-x-8">
               <Link href="/courses" className="text-gray-700 hover:text-blue-600 transition">
                 Courses
+              </Link>
+              <Link href="/creators" className="text-gray-700 hover:text-blue-600 transition">
+                Creators
               </Link>
               <Link href="#how-it-works" className="text-gray-700 hover:text-blue-600 transition">
                 How It Works
@@ -62,6 +93,29 @@ export default function HomePage() {
             <p className="text-xl lg:text-2xl mb-8 text-blue-100">
               Evidence-based continuing education for radiographers, radiotherapists, nuclear medicine professionals, and medical physicists. Flexible, affordable, and accredited.
             </p>
+
+            {/* Global Search Bar */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <form action="/search" method="get">
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="q"
+                    placeholder="Search courses, creators, publications..."
+                    className="w-full px-6 py-4 pr-12 rounded-lg text-gray-900 text-lg focus:ring-2 focus:ring-white focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link
                 href="/signup"
@@ -123,8 +177,90 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Trending Now Section */}
+      {trendingCourses.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                  Trending Now
+                </h2>
+                <p className="text-xl text-gray-600">
+                  Most popular courses this week
+                </p>
+              </div>
+              <Link href="/courses" className="text-blue-600 hover:text-blue-700 font-medium">
+                View All →
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {trendingCourses.map((course) => (
+                <Link
+                  key={course.id}
+                  href={`/courses/${course.slug}`}
+                  className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  {course.thumbnail ? (
+                    <div className="relative w-full h-48 bg-gray-200">
+                      <Image
+                        src={course.thumbnail}
+                        alt={course.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center">
+                      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      {course.creator.image ? (
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden">
+                          <Image
+                            src={course.creator.image}
+                            alt={course.creator.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-medium">
+                          {course.creator.name.charAt(0)}
+                        </div>
+                      )}
+                      <span className="text-sm text-gray-600">{course.creator.name}</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                      {course.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="px-2 py-1 bg-gray-100 rounded">{course.category}</span>
+                        <span>{course.cpdHours} hrs</span>
+                      </div>
+                      <div className="text-lg font-bold text-gray-900">
+                        {course.price === 0 ? 'Free' : `R${course.price}`}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Course Categories */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -160,7 +296,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -188,7 +324,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20">
+      <section id="how-it-works" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -219,7 +355,7 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">

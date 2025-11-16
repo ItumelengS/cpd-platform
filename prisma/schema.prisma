@@ -14,6 +14,31 @@ enum Role {
   USER
   ADMIN
   INSTRUCTOR
+  CREATOR
+}
+
+enum CreatorStatus {
+  NONE          // Not a creator
+  PENDING       // Application submitted
+  APPROVED      // Active creator
+  REJECTED      // Application rejected
+  SUSPENDED     // Temporarily suspended
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DMCAStatus {
+  PENDING
+  UNDER_REVIEW
+  CONTENT_REMOVED
+  DISMISSED
+  COUNTER_NOTICE_RECEIVED
 }
 
 model User {
@@ -25,14 +50,45 @@ model User {
   specialty    String?
   institution  String?
   country      String?
+
+  // Creator fields
+  isCreator     Boolean       @default(false)
+  creatorStatus CreatorStatus @default(NONE)
+  bio           String?       @db.Text
+  avatar        String?
+  cvUrl         String?
+  socialLinks   Json?         // {twitter, linkedin, website}
+
+  // Stripe Connect
+  stripeAccountId         String?  @unique
+  stripeOnboarded         Boolean  @default(false)
+  stripeDetailsSubmitted  Boolean  @default(false)
+  stripeChargesEnabled    Boolean  @default(false)
+  stripePayoutsEnabled    Boolean  @default(false)
+
+  // Email preferences
+  emailPreferences Json? @default("{\"newFollowers\":true,\"courseApproved\":true,\"courseRejected\":true,\"earnings\":true,\"payouts\":true,\"reviews\":true,\"weeklySummary\":true}")
+
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   // Relations
-  enrollments  Enrollment[]
-  attempts     QuizAttempt[]
-  certificates Certificate[]
-  progress     Progress[]
+  enrollments      Enrollment[]
+  attempts         QuizAttempt[]
+  certificates     Certificate[]
+  progress         Progress[]
+  createdCourses   Course[]              @relation("CreatedBy")
+  publications     Publication[]
+  followers        Follow[]              @relation("Following")
+  following        Follow[]              @relation("Follower")
+  applications     CreatorApplication[]
+  notifications    Notification[]
+  views            View[]
+  creatorViews     View[]                @relation("CreatorViews")
+  earnings         CreatorEarning[]
+  payouts          Payout[]
+  reviews          Review[]
+  reviewResponses  ReviewResponse[]
 }
 
 model Category {
@@ -44,7 +100,8 @@ model Category {
   order       Int      @default(0)
 
   // Relations
-  courses     Course[]
+  courses      Course[]
+  publications Publication[]
 }
 
 model Course {
@@ -55,11 +112,32 @@ model Course {
   thumbnail     String?
   categoryId    String
   category      Category      @relation(fields: [categoryId], references: [id])
+
+  // Creator relation
+  creatorId     String?
+  creator       User?         @relation("CreatedBy", fields: [creatorId], references: [id])
+
   cpdHours      Float         // e.g., 2.0
   difficulty    String        // Beginner/Intermediate/Advanced
   sourceArticle String?       // DOI or citation
   published     Boolean       @default(false)
+
+  // Content approval
+  isDraft       Boolean       @default(true)
+  submittedAt   DateTime?
+  publishedAt   DateTime?
+  rejectedAt    DateTime?
+  rejectionReason String?     @db.Text
+
   price         Float         @default(0)
+
+  // Analytics
+  totalViews    Int           @default(0)
+
+  // Reviews
+  averageRating Float?        @default(0)
+  ratingCount   Int           @default(0)
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -67,6 +145,10 @@ model Course {
   sections      Section[]
   enrollments   Enrollment[]
   certificates  Certificate[]
+  views         View[]
+  reviews       Review[]
+
+  @@index([creatorId])
 }
 
 model Section {
@@ -77,6 +159,12 @@ model Section {
   content        String     @db.Text
   order          Int
   minTimeSeconds Int        @default(300)
+
+  // Content type support
+  contentType    String     @default("text") // text, video, pdf
+  videoUrl       String?
+  pdfUrl         String?
+  duration       Int?       // video duration in seconds
 
   // Relations
   questions      Question[]
@@ -155,4 +243,368 @@ model Certificate {
   issuedAt      DateTime @default(now())
 
   @@unique([userId, courseId])
+}
+
+// Creator Application model
+model CreatorApplication {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Application details
+  motivation      String        @db.Text  // Why they want to be a creator
+  expertise       String        @db.Text  // Their expertise areas
+  experience      String        @db.Text  // Teaching/content creation experience
+  sampleContent   String?       // Link to sample work
+  cvUrl           String        // Required CV upload
+
+  // Review details
+  status          CreatorStatus @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?       @db.Text
+
+  createdAt       DateTime      @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Publication model (research papers)
+model Publication {
+  id            String   @id @default(cuid())
+  title         String
+  description   String   @db.Text
+  creatorId     String
+  creator       User     @relation(fields: [creatorId], references: [id])
+
+  fileUrl       String   // PDF URL
+  thumbnail     String?
+  doi           String?  // Digital Object Identifier
+  journal       String?
+  publishedDate DateTime?
+
+  // Metadata
+  keywords      String[] // Array of keywords
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+
+  published     Boolean  @default(false)
+
+  // Analytics
+  totalViews    Int      @default(0)
+
+  // Content approval
+  submittedAt     DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?  @db.Text
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  views         View[]
+
+  @@index([creatorId])
+}
+
+// Follow system model
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// File upload tracking
+model FileUpload {
+  id          String   @id @default(cuid())
+  userId      String
+  fileName    String
+  fileUrl     String
+  fileType    String   // application/pdf, video/mp4, etc.
+  fileSize    Int      // bytes
+  uploadedAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Notification model
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String   // "new_course", "new_follower", "course_published", etc.
+  title     String
+  message   String   @db.Text
+  link      String?
+  data      Json?    // Additional data for the notification
+  read      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+// View tracking model
+model View {
+  id            String   @id @default(cuid())
+  userId        String?  // nullable for anonymous views
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // What was viewed
+  courseId      String?
+  course        Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  publicationId String?
+  publication   Publication? @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  // Creator who gets credit
+  creatorId     String
+  creator       User     @relation("CreatorViews", fields: [creatorId], references: [id])
+
+  // Engagement metrics
+  duration      Int      @default(0) // seconds spent
+  completed     Boolean  @default(false)
+
+  // Tracking
+  ipAddress     String?
+  userAgent     String?
+  referrer      String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([creatorId, createdAt])
+  @@index([courseId, createdAt])
+  @@index([userId, createdAt])
+}
+
+// Revenue tracking model
+model Revenue {
+  id              String   @id @default(cuid())
+
+  // Time period
+  month           Int      // 1-12
+  year            Int
+
+  // Platform totals
+  totalRevenue    Float    // Total ad revenue for this month
+  totalViews      Int      // Total views across all content
+  revenuePerView  Float    // Calculated: totalRevenue / totalViews
+
+  // Status
+  calculated      Boolean  @default(false)
+  calculatedAt    DateTime?
+
+  createdAt       DateTime @default(now())
+
+  creatorEarnings CreatorEarning[]
+
+  @@unique([year, month])
+  @@index([calculated])
+}
+
+// Creator earnings model
+model CreatorEarning {
+  id          String   @id @default(cuid())
+
+  revenueId   String
+  revenue     Revenue  @relation(fields: [revenueId], references: [id], onDelete: Cascade)
+
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id])
+
+  // Creator's metrics
+  views       Int      // Creator's views this month
+  viewShare   Float    // Percentage of total views
+
+  // Earnings
+  grossEarnings Float  // Before platform fee
+  platformFee   Float  // 30% goes to platform
+  netEarnings   Float  // Creator receives this (70%)
+
+  // Payout
+  paid          Boolean  @default(false)
+  paidAt        DateTime?
+  payoutId      String?
+  payout        Payout?  @relation(fields: [payoutId], references: [id])
+
+  createdAt     DateTime @default(now())
+
+  @@unique([revenueId, creatorId])
+  @@index([creatorId, paid])
+}
+
+// Payout model
+model Payout {
+  id              String       @id @default(cuid())
+
+  creatorId       String
+  creator         User         @relation(fields: [creatorId], references: [id])
+
+  // Amount
+  amount          Float        // Amount in dollars
+  currency        String       @default("usd")
+
+  // Stripe
+  stripePayoutId  String?      @unique
+  stripeTransferId String?     @unique
+
+  // Status
+  status          PayoutStatus @default(PENDING)
+  failureReason   String?
+
+  // Earnings included
+  earnings        CreatorEarning[]
+
+  // Timestamps
+  initiatedAt     DateTime     @default(now())
+  completedAt     DateTime?
+  failedAt        DateTime?
+
+  @@index([creatorId, status])
+  @@index([status, initiatedAt])
+}
+
+// Review model
+model Review {
+  id          String   @id @default(cuid())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  rating      Int      // 1-5 stars
+  title       String?
+  comment     String?  @db.Text
+
+  // Moderation
+  reported    Boolean  @default(false)
+  hidden      Boolean  @default(false)
+
+  // Engagement
+  helpful     Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  responses   ReviewResponse[]
+
+  @@unique([userId, courseId]) // One review per user per course
+  @@index([courseId, rating])
+  @@index([createdAt])
+}
+
+// Review response model
+model ReviewResponse {
+  id        String   @id @default(cuid())
+
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  creatorId String
+  creator   User     @relation(fields: [creatorId], references: [id])
+
+  comment   String   @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([reviewId])
+}
+
+// DMCA Report model
+model DMCAReport {
+  id                  String      @id @default(cuid())
+
+  // Reporter information
+  reporterName        String
+  reporterEmail       String
+  reporterAddress     String      @db.Text
+  copyrightOwner      String      // Name of copyright owner if different
+
+  // Report details
+  workDescription     String      @db.Text
+  infringingUrl       String
+  goodFaithStatement  Boolean
+  accuracyStatement   Boolean
+  signature           String
+
+  // Content being reported
+  contentId           String?
+  contentType         String?     // "course" or "publication"
+
+  // Review
+  status              DMCAStatus  @default(PENDING)
+  reviewedAt          DateTime?
+  reviewedBy          String?
+  resolution          String?     @db.Text
+
+  createdAt           DateTime    @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// User consent tracking
+model UserConsent {
+  id                  String      @id @default(cuid())
+  userId              String      @unique
+
+  // Terms & Privacy
+  termsAccepted       Boolean     @default(false)
+  termsAcceptedAt     DateTime?
+  privacyAccepted     Boolean     @default(false)
+  privacyAcceptedAt   DateTime?
+
+  // Age verification
+  ageVerified         Boolean     @default(false)
+  ageVerifiedAt       DateTime?
+
+  // Marketing
+  marketingEmails     Boolean     @default(false)
+  marketingEmailsAt   DateTime?
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+}
+
+// Data export requests
+model DataExportRequest {
+  id                  String      @id @default(cuid())
+  userId              String
+
+  status              String      @default("pending") // pending, processing, completed, failed
+  downloadUrl         String?
+  expiresAt           DateTime?
+
+  createdAt           DateTime    @default(now())
+  completedAt         DateTime?
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Account deletion requests
+model AccountDeletionRequest {
+  id                  String      @id @default(cuid())
+  userId              String      @unique
+
+  reason              String?     @db.Text
+  status              String      @default("pending") // pending, approved, completed, cancelled
+  scheduledFor        DateTime?   // 90-day grace period
+
+  createdAt           DateTime    @default(now())
+  processedAt         DateTime?
+
+  @@index([status])
+  @@index([scheduledFor])
 }

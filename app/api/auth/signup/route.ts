@@ -4,11 +4,18 @@ import { prisma } from "@/lib/prisma"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, password } = body
+    const { name, email, password, ageVerified, termsAccepted, privacyAccepted, marketingEmails } = body
 
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      )
+    }
+
+    if (!ageVerified || !termsAccepted || !privacyAccepted) {
+      return NextResponse.json(
+        { error: "You must accept the required consents" },
         { status: 400 }
       )
     }
@@ -25,12 +32,29 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create user
+    const now = new Date();
+
+    // Create user and consent record in a transaction
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password, // Password is already hashed from client
+      },
+    })
+
+    // Create consent record
+    await prisma.userConsent.create({
+      data: {
+        userId: user.id,
+        ageVerified: ageVerified,
+        ageVerifiedAt: now,
+        termsAccepted: termsAccepted,
+        termsAcceptedAt: now,
+        privacyAccepted: privacyAccepted,
+        privacyAcceptedAt: now,
+        marketingEmails: marketingEmails || false,
+        marketingEmailsAt: marketingEmails ? now : null,
       },
     })
 

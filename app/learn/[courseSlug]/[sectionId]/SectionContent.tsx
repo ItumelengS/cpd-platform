@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import QuizQuestion from "@/components/QuizQuestion"
+import AdUnit from "@/components/AdUnit"
+import { useViewTracking } from "@/hooks/useViewTracking"
 
 type Question = {
   id: string
@@ -22,6 +24,7 @@ type SectionContentProps = {
     content: string
     minTimeSeconds: number
   }
+  courseId: string
   questions: Question[]
   nextSectionId?: string
   courseSlug: string
@@ -30,6 +33,7 @@ type SectionContentProps = {
 
 export default function SectionContent({
   section,
+  courseId,
   questions,
   nextSectionId,
   courseSlug,
@@ -42,6 +46,9 @@ export default function SectionContent({
   const [canProceed, setCanProceed] = useState(initialCompleted)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Track view analytics
+  useViewTracking('course', courseId)
 
   // Update time spent every second
   useEffect(() => {
@@ -117,6 +124,14 @@ export default function SectionContent({
         <div className="prose prose-blue max-w-none">
           <div className="text-gray-700 whitespace-pre-wrap">{section.content}</div>
         </div>
+      </div>
+
+      {/* Ad Unit Below Content */}
+      <div className="mb-8">
+        <AdUnit
+          slot="1234567893"
+          format="horizontal"
+        />
       </div>
 
       {/* Quiz Questions */}

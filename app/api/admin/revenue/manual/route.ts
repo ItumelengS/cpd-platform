@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { calculateMonthlyRevenue } from '@/lib/revenue';
+
+export async function POST(request: NextRequest) {
+  try {
+    // Verify admin authentication
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden: Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const { year, month, totalRevenue } = body;
+
+    // Validate input
+    if (!year || !month || totalRevenue === undefined) {
+      return NextResponse.json(
+        { error: 'Missing required fields: year, month, totalRevenue' },
+        { status: 400 }
+      );
+    }
+
+    if (month < 1 || month > 12) {
+      return NextResponse.json(
+        { error: 'Invalid month: must be between 1 and 12' },
+        { status: 400 }
+      );
+    }
+
+    if (totalRevenue < 0) {
+      return NextResponse.json(
+        { error: 'Invalid totalRevenue: must be non-negative' },
+        { status: 400 }
+      );
+    }
+
+    // Check if revenue already calculated for this period
+    const existingRevenue = await prisma.revenue.findUnique({
+      where: {
+        year_month: {
+          year,
+          month,
+        },
+      },
+    });
+
+    if (existingRevenue) {
+      return NextResponse.json(
+        {
+          error: 'Revenue already calculated for this period',
+          existingRevenueId: existingRevenue.id
+        },
+        { status: 409 }
+      );
+    }
+
+    // Calculate monthly revenue
+    const calculation = await calculateMonthlyRevenue(year, month, totalRevenue);
+
+    // Use transaction to create revenue record and creator earnings
+    const result = await prisma.$transaction(async (tx) => {
+      // Create Revenue record
+      const revenue = await tx.revenue.create({
+        data: {
+          month,
+          year,
+          totalRevenue,
+          totalViews: calculation.totalViews,
+          revenuePerView: calculation.revenuePerView,
+          calculatedAt: new Date(),
+        },
+      });
+
+      // Create CreatorEarning records (bulk create)
+      if (calculation.creatorEarnings.length > 0) {
+        await tx.creatorEarning.createMany({
+          data: calculation.creatorEarnings.map((earning) => ({
+            revenueId: revenue.id,
+            creatorId: earning.creatorId,
+            views: earning.views,
+            viewShare: earning.viewShare,
+            grossEarnings: earning.grossEarnings,
+            platformFee: earning.platformFee,
+            netEarnings: earning.netEarnings,
+            paid: false,
+          })),
+        });
+      }
+
+      return revenue;
+    });
+
+    // Prepare detailed breakdown for UI
+    const breakdown = {
+      month,
+      year,
+      totalRevenue,
+      totalViews: calculation.totalViews,
+      revenuePerView: calculation.revenuePerView,
+      creatorsCount: calculation.creatorEarnings.length,
+      platformRevenue: calculation.creatorEarnings.reduce(
+        (sum, earning) => sum + earning.platformFee,
+        0
+      ),
+      creatorRevenue: calculation.creatorEarnings.reduce(
+        (sum, earning) => sum + earning.netEarnings,
+        0
+      ),
+      topEarners: calculation.creatorEarnings
+        .sort((a, b) => b.netEarnings - a.netEarnings)
+        .slice(0, 5)
+        .map((earning) => ({
+          creatorName: earning.creatorName,
+          views: earning.views,
+          netEarnings: earning.netEarnings,
+        })),
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: 'Revenue calculated and distributed successfully',
+      revenueId: result.id,
+      breakdown,
+    });
+  } catch (error) {
+    console.error('Error in manual revenue calculation:', error);
+    return NextResponse.json(
+      { error: 'Failed to calculate revenue' },
+      { status: 500 }
+    );
+  }
+}
