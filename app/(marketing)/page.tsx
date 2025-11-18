@@ -5,34 +5,42 @@ import SearchBar from "@/components/SearchBar"
 
 export default async function HomePage() {
   // Fetch trending courses (most viewed this week)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  let trendingCourses: any[] = [];
 
-  const trendingCourses = await prisma.course.findMany({
-    where: {
-      published: true,
-      updatedAt: {
-        gte: sevenDaysAgo,
-      },
-    },
-    include: {
-      creator: {
-        select: {
-          name: true,
-          avatar: true,
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    trendingCourses = await prisma.course.findMany({
+      where: {
+        published: true,
+        updatedAt: {
+          gte: sevenDaysAgo,
         },
       },
-      category: {
-        select: {
-          name: true,
+      include: {
+        creator: {
+          select: {
+            name: true,
+            avatar: true,
+          },
+        },
+        category: {
+          select: {
+            name: true,
+          },
         },
       },
-    },
-    orderBy: {
-      totalViews: 'desc',
-    },
-    take: 6,
-  });
+      orderBy: {
+        totalViews: 'desc',
+      },
+      take: 6,
+    });
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    // Gracefully handle database errors during build
+    trendingCourses = [];
+  }
 
   return (
     <div className="min-h-screen">
