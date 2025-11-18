@@ -19,7 +19,7 @@ interface PayoutResult {
 
 /**
  * POST /api/admin/payouts/process
- * Processes payouts for all creators with earnings >= $50 for a given revenue period
+ * Processes payouts for all creators with earnings >= R900 for a given revenue period
  */
 export async function POST(request: NextRequest) {
   try {
@@ -56,13 +56,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all unpaid creator earnings >= $50 for this revenue period
+    // Get all unpaid creator earnings >= R900 for this revenue period
     const eligibleEarnings = await prisma.creatorEarning.findMany({
       where: {
         revenueId: revenueId,
         paid: false,
         netEarnings: {
-          gte: 50,
+          gte: 900,
         },
       },
       include: {
@@ -106,8 +106,8 @@ export async function POST(request: NextRequest) {
       const creator = earning.creator;
       const amount = earning.netEarnings;
 
-      // Calculate Stripe transfer fee (0.5%, capped at $5)
-      const stripeFee = Math.min(amount * 0.005, 5);
+      // Calculate Stripe transfer fee (0.5%, capped at R90)
+      const stripeFee = Math.min(amount * 0.005, 90);
       const netAmount = amount - stripeFee;
 
       try {
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
           data: {
             creatorId: creator.id,
             amount: netAmount,
-            currency: 'usd',
+            currency: 'zar',
             status: PayoutStatus.PROCESSING,
           },
         });
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
 
             await sendEmail({
               to: creator.email,
-              subject: `Payment sent: $${netAmount.toFixed(2)} on its way!`,
+              subject: `Payment sent: R${netAmount.toFixed(2)} on its way!`,
               html: emailHtml,
             });
           }
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
             data: {
               creatorId: creator.id,
               amount: netAmount,
-              currency: 'usd',
+              currency: 'zar',
               status: PayoutStatus.FAILED,
               failureReason: error instanceof Error ? error.message : 'Unknown error',
               failedAt: new Date(),

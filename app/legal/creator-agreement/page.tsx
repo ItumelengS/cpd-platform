@@ -133,7 +133,7 @@ export default function CreatorAgreement() {
 
               <p className="font-semibold">4.3 Minimum Payout Threshold</p>
               <p>
-                The minimum payout amount is $50. Earnings below this threshold will be carried over to the next month
+                The minimum payout amount is R900. Earnings below this threshold will be carried over to the next month
                 until the minimum is reached.
               </p>
 

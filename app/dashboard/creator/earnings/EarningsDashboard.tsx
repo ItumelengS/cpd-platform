@@ -165,7 +165,7 @@ export default function EarningsDashboard({
                 Set Up Payouts to Receive Your Earnings
               </h3>
               <p className="text-gray-700 mb-4">
-                You have ${summary.availableForPayout.toFixed(2)} ready for payout, but you haven't connected a bank account yet.
+                You have R{summary.availableForPayout.toFixed(2)} ready for payout, but you haven't connected a bank account yet.
                 Connect your account via Stripe to start receiving monthly payouts.
               </p>
               <Link
@@ -188,7 +188,7 @@ export default function EarningsDashboard({
               <Calendar className="w-5 h-5 text-blue-600" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              ${summary.thisMonthEarnings.toFixed(2)}
+              R{summary.thisMonthEarnings.toFixed(2)}
             </div>
             <p className="text-sm text-gray-600 mt-2">
               {summary.thisMonthEarnings === 0 ? 'Not calculated yet' : 'Pending'}
@@ -202,7 +202,7 @@ export default function EarningsDashboard({
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              ${summary.totalLifetimeEarnings.toFixed(2)}
+              R{summary.totalLifetimeEarnings.toFixed(2)}
             </div>
             <p className="text-sm text-gray-600 mt-2">All-time total</p>
           </div>
@@ -214,12 +214,12 @@ export default function EarningsDashboard({
               <DollarSign className="w-5 h-5 text-green-600" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              ${summary.availableForPayout.toFixed(2)}
+              R{summary.availableForPayout.toFixed(2)}
             </div>
             <p className="text-sm text-gray-600 mt-2">Ready to withdraw</p>
             {summary.belowThreshold > 0 && (
               <p className="text-xs text-amber-600 mt-1">
-                +${summary.belowThreshold.toFixed(2)} below threshold
+                +R{summary.belowThreshold.toFixed(2)} below threshold
               </p>
             )}
           </div>
@@ -246,8 +246,8 @@ export default function EarningsDashboard({
                 Earnings Below Minimum Threshold
               </h3>
               <p className="text-sm text-gray-700">
-                You have ${summary.belowThreshold.toFixed(2)} in earnings below the $50 minimum payout threshold.
-                These earnings will be carried over and paid out once your total unpaid earnings reach $50.
+                You have R{summary.belowThreshold.toFixed(2)} in earnings below the R900 minimum payout threshold.
+                These earnings will be carried over and paid out once your total unpaid earnings reach R900.
               </p>
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function EarningsDashboard({
                 <Tooltip
                   formatter={(value: number, name: string) => {
                     if (name === 'earnings') {
-                      return [`$${value.toFixed(2)}`, 'Earnings'];
+                      return [`R${value.toFixed(2)}`, 'Earnings'];
                     }
                     return [value.toLocaleString(), 'Views'];
                   }}
@@ -402,9 +402,9 @@ export default function EarningsDashboard({
                         {(earning.viewShare * 100).toFixed(2)}%
                       </td>
                       <td className="py-3 px-4 text-right text-green-600 font-semibold">
-                        ${earning.netEarnings.toFixed(2)}
-                        {!earning.paid && earning.netEarnings < 50 && (
-                          <div className="text-xs text-amber-600 font-normal">Below $50 threshold</div>
+                        R{earning.netEarnings.toFixed(2)}
+                        {!earning.paid && earning.netEarnings < 900 && (
+                          <div className="text-xs text-amber-600 font-normal">Below R900 threshold</div>
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -466,7 +466,7 @@ export default function EarningsDashboard({
                         {new Date(payout.completedAt || payout.initiatedAt).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 text-right font-semibold text-gray-900">
-                        ${payout.amount.toFixed(2)}
+                        R{payout.amount.toFixed(2)}
                       </td>
                       <td className="py-3 px-4">
                         {payout.status === PayoutStatus.COMPLETED && (
@@ -528,7 +528,7 @@ export default function EarningsDashboard({
               <strong>Creator Share:</strong> You receive 70% of the revenue generated from your views. The platform keeps 30% for operations.
             </p>
             <p>
-              <strong>Minimum Payout:</strong> $50.00 - Earnings below this threshold accumulate until you reach the minimum.
+              <strong>Minimum Payout:</strong> R900.00 - Earnings below this threshold accumulate until you reach the minimum.
             </p>
             <p>
               <strong>Payout Schedule:</strong> Payouts are processed on the 5th of each month for the previous month's earnings.

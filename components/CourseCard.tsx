@@ -57,7 +57,7 @@ export default function CourseCard({ course }: { course: CourseWithCategory }) {
             {course.price === 0 ? (
               <span className="text-green-600">Free</span>
             ) : (
-              <span>${course.price}</span>
+              <span>R{course.price}</span>
             )}
           </div>
           <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">

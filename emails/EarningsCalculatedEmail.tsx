@@ -68,11 +68,11 @@ export default function EarningsCalculatedEmail({
             {/* Earnings Amount */}
             <Section style={earningsBox}>
               <Text style={earningsLabel}>Total Earnings</Text>
-              <Text style={earningsAmount}>${amount.toFixed(2)}</Text>
+              <Text style={earningsAmount}>R{amount.toFixed(2)}</Text>
               <Text style={earningsPeriod}>{monthName} {year}</Text>
             </Section>
 
-            {amount >= 50 ? (
+            {amount >= 900 ? (
               <>
                 <Section style={infoBox}>
                   <Text style={infoTitle}>Payout Information</Text>
@@ -89,7 +89,7 @@ export default function EarningsCalculatedEmail({
                 <Section style={warningBox}>
                   <Text style={warningTitle}>Minimum Payout Not Met</Text>
                   <Text style={warningText}>
-                    You need to earn at least <strong>$50.00</strong> to receive a payout. Your current earnings of <strong>${amount.toFixed(2)}</strong> will roll over to next month.
+                    You need to earn at least <strong>R900.00</strong> to receive a payout. Your current earnings of <strong>R{amount.toFixed(2)}</strong> will roll over to next month.
                   </Text>
                   <Text style={warningText}>
                     Keep creating great content to reach the minimum threshold!
@@ -106,7 +106,7 @@ export default function EarningsCalculatedEmail({
               <Text style={statsItem}>
                 • After platform fees (30%), you keep 70% of generated revenue
               </Text>
-              {amount >= 50 && (
+              {amount >= 900 && (
                 <Text style={statsItem}>
                   • Automatic payout on {payoutDateStr} (5th of next month)
                 </Text>

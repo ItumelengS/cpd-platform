@@ -442,10 +442,10 @@ export default function CreatorSettingsPage() {
                       }
                       className="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value={25}>$25</option>
-                      <option value={50}>$50</option>
-                      <option value={100}>$100</option>
-                      <option value={200}>$200</option>
+                      <option value={450}>R450</option>
+                      <option value={900}>R900</option>
+                      <option value={1800}>R1,800</option>
+                      <option value={3600}>R3,600</option>
                     </select>
                     <p className="text-sm text-gray-500 mt-2">
                       Payouts will only be processed when your balance reaches this

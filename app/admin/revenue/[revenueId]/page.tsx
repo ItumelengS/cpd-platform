@@ -106,7 +106,7 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
               <DollarSign className="w-5 h-5 text-green-600" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              ${revenue.totalRevenue.toLocaleString(undefined, {
+              R{revenue.totalRevenue.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -124,7 +124,7 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
               {revenue.totalViews.toLocaleString()}
             </div>
             <p className="text-sm text-gray-600 mt-2">
-              ${revenue.revenuePerView.toFixed(4)} per view
+              R{revenue.revenuePerView.toFixed(4)} per view
             </p>
           </div>
 
@@ -149,13 +149,13 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
               <DollarSign className="w-5 h-5 text-blue-600" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              ${totalCreatorEarnings.toLocaleString(undefined, {
+              R{totalCreatorEarnings.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
             <p className="text-sm text-gray-600 mt-2">
-              Platform: ${totalPlatformFees.toFixed(2)}
+              Platform: R{totalPlatformFees.toFixed(2)}
             </p>
           </div>
         </div>
@@ -217,15 +217,15 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
                       {(earning.viewShare * 100).toFixed(2)}%
                     </td>
                     <td className="py-3 px-4 text-right text-gray-700">
-                      ${earning.grossEarnings.toFixed(2)}
+                      R{earning.grossEarnings.toFixed(2)}
                     </td>
                     <td className="py-3 px-4 text-right text-red-600">
-                      -${earning.platformFee.toFixed(2)}
+                      -R{earning.platformFee.toFixed(2)}
                     </td>
                     <td className="py-3 px-4 text-right text-green-600 font-semibold">
-                      ${earning.netEarnings.toFixed(2)}
-                      {earning.netEarnings < 50 && (
-                        <div className="text-xs text-gray-500 font-normal">Below $50 threshold</div>
+                      R{earning.netEarnings.toFixed(2)}
+                      {earning.netEarnings < 900 && (
+                        <div className="text-xs text-gray-500 font-normal">Below R900 threshold</div>
                       )}
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -255,13 +255,13 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
                   </td>
                   <td className="py-3 px-4 text-right font-semibold text-gray-900">100%</td>
                   <td className="py-3 px-4 text-right font-semibold text-gray-900">
-                    ${revenue.totalRevenue.toFixed(2)}
+                    R{revenue.totalRevenue.toFixed(2)}
                   </td>
                   <td className="py-3 px-4 text-right font-semibold text-red-600">
-                    -${totalPlatformFees.toFixed(2)}
+                    -R{totalPlatformFees.toFixed(2)}
                   </td>
                   <td className="py-3 px-4 text-right font-semibold text-green-600">
-                    ${totalCreatorEarnings.toFixed(2)}
+                    R{totalCreatorEarnings.toFixed(2)}
                   </td>
                   <td className="py-3 px-4"></td>
                 </tr>
@@ -281,7 +281,7 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
               <strong>Formula:</strong> Creator Net Earnings = (Total Platform Revenue) × (Creator Views / Total Platform Views) × 0.70
             </p>
             <p>
-              <strong>Minimum Payout:</strong> $50.00 - Earnings below this threshold are carried over to the next payout period.
+              <strong>Minimum Payout:</strong> R900.00 - Earnings below this threshold are carried over to the next payout period.
             </p>
             <p>
               <strong>Platform Fee:</strong> 30% of gross revenue covers hosting, bandwidth, payment processing, and platform operations.

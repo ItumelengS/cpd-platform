@@ -450,8 +450,8 @@ model Payout {
   creator         User         @relation(fields: [creatorId], references: [id])
 
   // Amount
-  amount          Float        // Amount in dollars
-  currency        String       @default("usd")
+  amount          Float        // Amount in ZAR (South African Rands)
+  currency        String       @default("zar")
 
   // Stripe
   stripePayoutId  String?      @unique

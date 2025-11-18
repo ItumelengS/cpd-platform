@@ -66,7 +66,7 @@ export async function createAccountLink(
 /**
  * Creates a payout (transfer) to a creator's Stripe Connect account
  * @param accountId - The Stripe Connect account ID
- * @param amount - Amount in dollars
+ * @param amount - Amount in ZAR (South African Rands)
  * @param description - Description for the transfer
  * @returns The Stripe transfer object
  */
@@ -76,12 +76,12 @@ export async function createPayout(
   description: string
 ): Promise<Stripe.Transfer> {
   try {
-    // Convert dollars to cents
+    // Convert rands to cents
     const amountInCents = Math.round(amount * 100);
 
     const transfer = await stripe.transfers.create({
       amount: amountInCents,
-      currency: 'usd',
+      currency: 'zar',
       destination: accountId,
       description: description,
       metadata: {

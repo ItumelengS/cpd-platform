@@ -159,7 +159,7 @@ export default function RevenueCalculatorForm() {
         <ul className="list-disc list-inside space-y-1">
           <li>Platform receives 30% of total revenue</li>
           <li>Creators receive 70% based on their view share</li>
-          <li>Minimum payout threshold: $50</li>
+          <li>Minimum payout threshold: R900</li>
         </ul>
       </div>
     </form>

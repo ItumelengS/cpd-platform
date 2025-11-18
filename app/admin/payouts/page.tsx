@@ -23,7 +23,7 @@ export default async function AdminPayoutsPage() {
     redirect('/dashboard');
   }
 
-  // Get pending payouts (unpaid earnings >= $50)
+  // Get pending payouts (unpaid earnings >= R900)
   const pendingEarnings = await prisma.creatorEarning.findMany({
     where: {
       paid: false,
@@ -288,11 +288,11 @@ export default async function AdminPayoutsPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Payout Information</h3>
           <div className="space-y-2 text-sm text-gray-700">
             <p>
-              <strong>Minimum Payout:</strong> $50.00 - Earnings below this threshold are carried
+              <strong>Minimum Payout:</strong> R900.00 - Earnings below this threshold are carried
               over to the next payout period.
             </p>
             <p>
-              <strong>Stripe Transfer Fee:</strong> 0.5% per transfer (capped at $5.00) is deducted
+              <strong>Stripe Transfer Fee:</strong> 0.5% per transfer (capped at R90.00) is deducted
               from each payout.
             </p>
             <p>

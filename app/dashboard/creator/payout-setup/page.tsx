@@ -180,7 +180,7 @@ export default function PayoutSetupPage() {
                     <li>Secure and encrypted payment processing</li>
                     <li>Direct deposit to your bank account</li>
                     <li>Automatic monthly payouts on the 5th of each month</li>
-                    <li>Minimum payout threshold: $50.00</li>
+                    <li>Minimum payout threshold: R900.00</li>
                   </ul>
                 </div>
                 <button
@@ -208,7 +208,7 @@ export default function PayoutSetupPage() {
                   <DollarSign className="w-6 h-6 text-gray-400 mb-2" />
                   <h4 className="font-medium text-gray-900 mb-1">Minimum Payout</h4>
                   <p className="text-sm text-gray-600">
-                    You'll receive payouts once your earnings reach $50.00
+                    You'll receive payouts once your earnings reach R900.00
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -310,7 +310,7 @@ export default function PayoutSetupPage() {
               <strong>Revenue Sharing:</strong> Creators earn 70% of revenue based on their proportion of total platform views.
             </p>
             <p>
-              <strong>Minimum Threshold:</strong> Payouts are only processed when your balance reaches $50.00. Earnings below this threshold are carried over to the next month.
+              <strong>Minimum Threshold:</strong> Payouts are only processed when your balance reaches R900.00. Earnings below this threshold are carried over to the next month.
             </p>
             <p>
               <strong>Processing Time:</strong> Payouts are initiated on the 5th of each month and typically arrive in your bank account within 2-7 business days.
