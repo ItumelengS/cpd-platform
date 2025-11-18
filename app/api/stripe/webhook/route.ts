@@ -50,22 +50,6 @@ export async function POST(request: NextRequest) {
   try {
     // Handle different event types
     switch (event.type) {
-      case 'transfer.created':
-        await handleTransferCreated(event.data.object as Stripe.Transfer);
-        break;
-
-      case 'transfer.paid':
-        await handleTransferPaid(event.data.object as Stripe.Transfer);
-        break;
-
-      case 'transfer.failed':
-        await handleTransferFailed(event.data.object as Stripe.Transfer);
-        break;
-
-      case 'transfer.reversed':
-        await handleTransferReversed(event.data.object as Stripe.Transfer);
-        break;
-
       case 'payout.paid':
         await handlePayoutPaid(event.data.object as Stripe.Payout);
         break;

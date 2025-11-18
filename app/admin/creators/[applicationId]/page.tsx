@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
@@ -24,8 +24,9 @@ interface Application {
 export default function ApplicationDetailPage({
   params,
 }: {
-  params: { applicationId: string };
+  params: Promise<{ applicationId: string }>;
 }) {
+  const { applicationId } = use(params);
   const { data: session, status } = useSession();
   const router = useRouter();
   const [application, setApplication] = useState<Application | null>(null);
@@ -37,7 +38,7 @@ export default function ApplicationDetailPage({
   useEffect(() => {
     const fetchApplication = async () => {
       try {
-        const response = await fetch(`/api/admin/creator/application/${params.applicationId}`);
+        const response = await fetch(`/api/admin/creator/application/${applicationId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch application');
         }
@@ -53,7 +54,7 @@ export default function ApplicationDetailPage({
     if (status === 'authenticated') {
       fetchApplication();
     }
-  }, [params.applicationId, status]);
+  }, [applicationId, status]);
 
   if (status === 'loading' || loading) {
     return (
@@ -87,7 +88,7 @@ export default function ApplicationDetailPage({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ applicationId: params.applicationId }),
+        body: JSON.stringify({ applicationId }),
       });
 
       if (!response.ok) {
@@ -132,7 +133,7 @@ export default function ApplicationDetailPage({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          applicationId: params.applicationId,
+          applicationId,
           reason: rejectionReason,
         }),
       });

@@ -4,9 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function CreatorApplicationPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const session = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -17,7 +20,8 @@ export default function CreatorApplicationPage() {
     cvFile: null as File | null,
   });
 
-  if (status === 'loading') {
+  // Handle session loading or undefined states
+  if (!session || session.status === 'loading') {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg">Loading...</div>
@@ -25,7 +29,7 @@ export default function CreatorApplicationPage() {
     );
   }
 
-  if (status === 'unauthenticated') {
+  if (session.status === 'unauthenticated') {
     router.push('/login?callbackUrl=/creator/apply');
     return null;
   }

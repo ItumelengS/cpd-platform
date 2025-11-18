@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -83,11 +82,11 @@ export async function POST(request: NextRequest) {
         data: {
           title,
           slug,
-          category,
+          categoryId: category,
           description,
           difficulty: difficulty || 'BEGINNER',
           cpdHours: parseFloat(cpdHours) || 1,
-          thumbnailUrl,
+          thumbnail: thumbnailUrl,
           creatorId: session.user.id,
           isDraft: isDraft !== false,
           published: false,
@@ -105,10 +104,10 @@ export async function POST(request: NextRequest) {
               contentType: section.contentType,
               content: section.content,
               videoUrl: section.videoUrl,
-              videoThumbnailUrl: section.videoThumbnailUrl,
               pdfUrl: section.pdfUrl,
               order: section.order,
               minTimeSeconds: section.minTimeSeconds || 60,
+              duration: section.duration,
             },
           });
         })
@@ -135,6 +134,7 @@ export async function POST(request: NextRequest) {
               optionD: question.optionD,
               correctAnswer: question.correctAnswer,
               explanation: question.explanation,
+              order: question.order || 0,
             },
           });
         })
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -208,7 +208,6 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             sections: true,
-            questions: true,
           },
         },
       },

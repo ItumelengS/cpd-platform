@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { createPayout } from '@/lib/stripe';
 import { PayoutStatus } from '@prisma/client';
 import { sendEmail, checkEmailPreference } from '@/lib/email';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { render } from '@react-email/render';
 import PayoutCompletedEmail from '@/emails/PayoutCompletedEmail';
 
 interface PayoutResult {
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
         try {
           const shouldSendEmail = await checkEmailPreference(creator.id, 'payouts');
           if (shouldSendEmail && creator.email) {
-            const emailHtml = renderToStaticMarkup(
+            const emailHtml = await render(
               PayoutCompletedEmail({
                 amount: netAmount,
                 stripePayoutId: transfer.id,

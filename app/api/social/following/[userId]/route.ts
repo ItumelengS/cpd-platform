@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
     const perPage = 20;
@@ -31,16 +31,12 @@ export async function GET(
               id: true,
               name: true,
               email: true,
-              image: true,
-              creatorProfile: {
-                select: {
-                  specialty: true,
-                  bio: true,
-                },
-              },
-              courses: {
+              avatar: true,
+              specialty: true,
+              bio: true,
+              createdCourses: {
                 where: {
-                  status: 'APPROVED',
+                  published: true,
                 },
                 select: {
                   id: true,
@@ -77,22 +73,22 @@ export async function GET(
         const courseCount = await prisma.course.count({
           where: {
             creatorId: follow.following.id,
-            status: 'APPROVED',
+            published: true,
           },
         });
 
         return {
           id: follow.following.id,
           name: follow.following.name,
-          avatar: follow.following.image,
-          specialty: follow.following.creatorProfile?.specialty || null,
-          bio: follow.following.creatorProfile?.bio || null,
+          avatar: follow.following.avatar,
+          specialty: follow.following.specialty || null,
+          bio: follow.following.bio || null,
           courseCount,
-          latestCourse: follow.following.courses[0]
+          latestCourse: follow.following.createdCourses[0]
             ? {
-                title: follow.following.courses[0].title,
-                slug: follow.following.courses[0].slug,
-                createdAt: follow.following.courses[0].createdAt,
+                title: follow.following.createdCourses[0].title,
+                slug: follow.following.createdCourses[0].slug,
+                createdAt: follow.following.createdCourses[0].createdAt,
               }
             : null,
           followedAt: follow.createdAt,

@@ -207,7 +207,7 @@ export default function FollowersDashboard({ data }: FollowersDashboardProps) {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={(entry) => entry.specialty}
+                    label={(entry) => entry.name}
                   >
                     {data.demographics.bySpecialty.map((entry, index) => (
                       <Cell

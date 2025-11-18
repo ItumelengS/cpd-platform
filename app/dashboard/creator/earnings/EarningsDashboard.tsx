@@ -30,7 +30,7 @@ interface Earning {
   netEarnings: number;
   paid: boolean;
   paidAt: string | null;
-  calculatedAt: string;
+  calculatedAt: string | null;
   revenuePerView: number;
 }
 
@@ -390,7 +390,9 @@ export default function EarningsDashboard({
                           {monthNames[earning.month - 1]} {earning.year}
                         </div>
                         <div className="text-xs text-gray-500">
-                          Calculated {new Date(earning.calculatedAt).toLocaleDateString()}
+                          {earning.calculatedAt
+                            ? `Calculated ${new Date(earning.calculatedAt).toLocaleDateString()}`
+                            : 'Not calculated yet'}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right text-gray-900 font-medium">

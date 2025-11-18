@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { sendEmail, checkEmailPreference } from '@/lib/email';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { render } from '@react-email/render';
 import WeeklySummaryEmail from '@/emails/WeeklySummaryEmail';
 
 /**
@@ -142,7 +142,7 @@ export async function sendWeeklySummaryEmails() {
         }
 
         // Send email
-        const emailHtml = renderToStaticMarkup(
+        const emailHtml = await render(
           WeeklySummaryEmail({
             creatorName: creator.name || 'there',
             weekStats: {
@@ -206,7 +206,7 @@ export async function sendTestWeeklySummary(creatorId: string) {
     throw new Error('Creator not found or has no email');
   }
 
-  const emailHtml = renderToStaticMarkup(
+  const emailHtml = await render(
     WeeklySummaryEmail({
       creatorName: creator.name || 'there',
       weekStats: {

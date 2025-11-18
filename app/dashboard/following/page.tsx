@@ -1,12 +1,11 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import FollowingList from './FollowingList';
 import Link from 'next/link';
 
 export default async function FollowingPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect('/auth/signin');
@@ -23,16 +22,12 @@ export default async function FollowingPage() {
           id: true,
           name: true,
           email: true,
-          image: true,
-          creatorProfile: {
-            select: {
-              specialty: true,
-              bio: true,
-            },
-          },
-          courses: {
+          avatar: true,
+          specialty: true,
+          bio: true,
+          createdCourses: {
             where: {
-              status: 'APPROVED',
+              published: true,
             },
             select: {
               id: true,
@@ -61,18 +56,18 @@ export default async function FollowingPage() {
       const courseCount = await prisma.course.count({
         where: {
           creatorId: follow.following.id,
-          status: 'APPROVED',
+          published: true,
         },
       });
 
       return {
         id: follow.following.id,
         name: follow.following.name || 'Unknown',
-        avatar: follow.following.image,
-        specialty: follow.following.creatorProfile?.specialty || 'General',
-        bio: follow.following.creatorProfile?.bio,
+        avatar: follow.following.avatar,
+        specialty: follow.following.specialty || 'General',
+        bio: follow.following.bio,
         courseCount,
-        latestCourse: follow.following.courses[0] || null,
+        latestCourse: follow.following.createdCourses[0] || null,
         followedAt: follow.createdAt,
       };
     })
@@ -84,7 +79,7 @@ export default async function FollowingPage() {
       creatorId: {
         in: following.map((f) => f.following.id),
       },
-      status: 'APPROVED',
+      published: true,
     },
     select: {
       id: true,
@@ -97,7 +92,7 @@ export default async function FollowingPage() {
         select: {
           id: true,
           name: true,
-          image: true,
+          avatar: true,
         },
       },
     },
@@ -179,7 +174,7 @@ export default async function FollowingPage() {
                             {course.title}
                           </p>
                           <p className="text-xs text-gray-600 mt-1">
-                            {course.creator.name}
+                            {course.creator?.name || 'Unknown Creator'}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(course.createdAt).toLocaleDateString()}

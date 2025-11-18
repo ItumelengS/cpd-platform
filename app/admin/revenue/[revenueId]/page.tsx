@@ -7,12 +7,13 @@ import ExportCSVButton from './ExportCSVButton';
 import ProcessPayoutsButton from './ProcessPayoutsButton';
 
 interface RevenueDetailPageProps {
-  params: {
+  params: Promise<{
     revenueId: string;
-  };
+  }>;
 }
 
 export default async function RevenueDetailPage({ params }: RevenueDetailPageProps) {
+  const { revenueId } = await params;
   const session = await auth();
 
   // Check if user is admin
@@ -22,7 +23,7 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
 
   // Fetch revenue details with creator earnings
   const revenue = await prisma.revenue.findUnique({
-    where: { id: params.revenueId },
+    where: { id: revenueId },
     include: {
       creatorEarnings: {
         include: {
@@ -82,7 +83,9 @@ export default async function RevenueDetailPage({ params }: RevenueDetailPagePro
                 {monthNames[revenue.month - 1]} {revenue.year} Revenue
               </h1>
               <p className="text-gray-600 mt-1">
-                Calculated on {new Date(revenue.calculatedAt).toLocaleDateString()}
+                {revenue.calculatedAt
+                  ? `Calculated on ${new Date(revenue.calculatedAt).toLocaleDateString()}`
+                  : 'Not yet calculated'}
               </p>
             </div>
             <ExportCSVButton

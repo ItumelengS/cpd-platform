@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     };
 
     const preferences = user.emailPreferences
-      ? { ...defaultPreferences, ...(user.emailPreferences as EmailPreferences) }
+      ? { ...defaultPreferences, ...(user.emailPreferences as unknown as EmailPreferences) }
       : defaultPreferences;
 
     return NextResponse.json({ preferences });

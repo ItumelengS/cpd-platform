@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { calculateMonthlyRevenue } from '@/lib/revenue';
 import { sendEmail, checkEmailPreference } from '@/lib/email';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { render } from '@react-email/render';
 import EarningsCalculatedEmail from '@/emails/EarningsCalculatedEmail';
 
 export async function POST(request: NextRequest) {
   try {
     // Verify admin authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session || !session.user) {
       return NextResponse.json(
@@ -126,7 +125,7 @@ export async function POST(request: NextRequest) {
         const shouldSend = await checkEmailPreference(earning.creatorId, 'earnings');
         if (!shouldSend) continue;
 
-        const emailHtml = renderToStaticMarkup(
+        const emailHtml = await render(
           EarningsCalculatedEmail({
             amount: earning.netEarnings,
             month,

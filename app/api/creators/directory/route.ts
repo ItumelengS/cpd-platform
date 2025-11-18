@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     };
 
     if (specialty) {
-      where.creatorSpecialty = specialty;
+      where.specialty = specialty;
     }
 
     if (country) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
-        { creatorBio: { contains: search, mode: 'insensitive' } },
+        { bio: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         break;
       case 'courses':
         orderBy = [
-          { coursesAsCreator: { _count: 'desc' } },
+          { createdCourses: { _count: 'desc' } },
           { totalFollowers: 'desc' },
         ];
         break;
@@ -65,9 +65,7 @@ export async function GET(request: NextRequest) {
         include: {
           _count: {
             select: {
-              coursesAsCreator: {
-                where: { status: 'Published' },
-              },
+              createdCourses: true,
               followers: true,
             },
           },
@@ -85,7 +83,7 @@ export async function GET(request: NextRequest) {
         const viewsData = await prisma.course.aggregate({
           where: {
             creatorId: creator.id,
-            status: 'Published',
+            published: true,
           },
           _sum: {
             totalViews: true,
@@ -95,12 +93,12 @@ export async function GET(request: NextRequest) {
         return {
           id: creator.id,
           name: creator.name,
-          image: creator.image,
-          specialty: creator.creatorSpecialty,
-          bio: creator.creatorBio,
+          avatar: creator.avatar,
+          specialty: creator.specialty,
+          bio: creator.bio,
           country: creator.country,
           followers: creator._count.followers,
-          courses: creator._count.coursesAsCreator,
+          courses: creator._count.createdCourses,
           totalViews: viewsData._sum.totalViews || 0,
         };
       })

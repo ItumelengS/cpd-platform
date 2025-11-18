@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -25,14 +24,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch course with sections and questions
+    // Fetch course with sections
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
         _count: {
           select: {
             sections: true,
-            questions: true,
           },
         },
       },
@@ -61,7 +59,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (course._count.questions === 0) {
+    // Count questions for this course
+    const questionCount = await prisma.question.count({
+      where: { courseId },
+    });
+
+    if (questionCount === 0) {
       return NextResponse.json(
         { error: 'Course must have at least one question' },
         { status: 400 }

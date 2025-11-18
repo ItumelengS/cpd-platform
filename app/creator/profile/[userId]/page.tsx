@@ -1,19 +1,18 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import FollowButton from '@/components/FollowButton';
 
 interface CreatorProfilePageProps {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
 export default async function CreatorProfilePage({ params }: CreatorProfilePageProps) {
-  const { userId } = params;
-  const session = await getServerSession(authOptions);
+  const { userId } = await params;
+  const session = await auth();
 
   const creator = await prisma.user.findUnique({
     where: { id: userId },
@@ -38,7 +37,7 @@ export default async function CreatorProfilePage({ params }: CreatorProfilePageP
           title: true,
           description: true,
           thumbnail: true,
-          views: true,
+          totalViews: true,
           createdAt: true,
         },
       },
@@ -246,7 +245,7 @@ export default async function CreatorProfilePage({ params }: CreatorProfilePageP
                     {publication.description}
                   </p>
                   <div className="text-sm text-gray-500">
-                    {publication.views} views
+                    {publication.totalViews} views
                   </div>
                 </div>
               ))}

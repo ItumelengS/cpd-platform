@@ -28,7 +28,8 @@ async function getPublicationForReview(publicationId: string) {
   return publication
 }
 
-export default async function PublicationReviewPage({ params }: { params: { id: string } }) {
+export default async function PublicationReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth()
 
   if (!session?.user) {
@@ -39,7 +40,7 @@ export default async function PublicationReviewPage({ params }: { params: { id: 
     redirect('/dashboard')
   }
 
-  const publication = await getPublicationForReview(params.id)
+  const publication = await getPublicationForReview(id)
 
   if (!publication) {
     notFound()

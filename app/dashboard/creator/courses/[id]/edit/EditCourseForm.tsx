@@ -16,6 +16,7 @@ interface Section {
   pdfUrl?: string | null;
   order: number;
   minTimeSeconds: number;
+  questions?: Question[];
 }
 
 interface Question {
@@ -35,13 +36,12 @@ interface Course {
   id: string;
   title: string;
   slug: string;
-  category: string;
+  categoryId: string;
   description: string;
   difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
   cpdHours: number;
-  thumbnailUrl: string;
+  thumbnail: string | null;
   sections: Section[];
-  questions: Question[];
 }
 
 const CATEGORIES = [
@@ -60,16 +60,21 @@ export default function EditCourseForm({ course }: { course: Course }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Extract all questions from sections
+  const allQuestions: Question[] = course.sections.flatMap(section =>
+    (section.questions || []).map(q => ({ ...q, sectionId: section.id } as Question))
+  );
+
   const [formData, setFormData] = useState({
     title: course.title,
     slug: course.slug,
-    category: course.category,
+    category: course.categoryId,
     description: course.description,
     difficulty: course.difficulty,
     cpdHours: course.cpdHours,
-    thumbnailUrl: course.thumbnailUrl,
+    thumbnailUrl: course.thumbnail || '',
     sections: course.sections,
-    questions: course.questions,
+    questions: allQuestions,
   });
 
   const generateSlug = (title: string): string => {
@@ -121,6 +126,7 @@ export default function EditCourseForm({ course }: { course: Course }) {
   const addQuestion = () => {
     const newQuestion: Question = {
       id: `question-${Date.now()}`,
+      sectionId: null,
       questionText: '',
       context: '',
       optionA: '',

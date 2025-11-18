@@ -51,20 +51,25 @@ export default async function CourseDetailPage({
   // Fetch related courses (Students Also Viewed)
   const relatedCourses = await prisma.course.findMany({
     where: {
-      status: 'Published',
+      published: true,
       id: {
         not: course.id,
       },
       OR: [
-        { category: course.category.name },
-        { creatorId: course.creator?.id },
+        { categoryId: course.categoryId },
+        { creatorId: course.creatorId },
       ],
     },
     include: {
       creator: {
         select: {
           name: true,
-          image: true,
+          avatar: true,
+        },
+      },
+      category: {
+        select: {
+          name: true,
         },
       },
     },
@@ -76,7 +81,7 @@ export default async function CourseDetailPage({
 
   return (
     <CourseDetailClient courseId={course.id}>
-    <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -329,6 +334,7 @@ export default async function CourseDetailPage({
           </div>
         </div>
       </div>
+      </div>
 
       {/* Related Content - Students Also Viewed */}
       {relatedCourses.length > 0 && (
@@ -360,23 +366,25 @@ export default async function CourseDetailPage({
                   </div>
                 )}
                 <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    {relatedCourse.creator.image ? (
-                      <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                        <Image
-                          src={relatedCourse.creator.image}
-                          alt={relatedCourse.creator.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-medium">
-                        {relatedCourse.creator.name.charAt(0)}
-                      </div>
-                    )}
-                    <span className="text-xs text-gray-600">{relatedCourse.creator.name}</span>
-                  </div>
+                  {relatedCourse.creator && (
+                    <div className="flex items-center gap-2 mb-2">
+                      {relatedCourse.creator.avatar ? (
+                        <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                          <Image
+                            src={relatedCourse.creator.avatar}
+                            alt={relatedCourse.creator.name || 'User'}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-medium">
+                          {relatedCourse.creator.name?.charAt(0) || 'U'}
+                        </div>
+                      )}
+                      <span className="text-xs text-gray-600">{relatedCourse.creator.name}</span>
+                    </div>
+                  )}
                   <h3 className="text-base font-semibold text-gray-900 mb-2 line-clamp-2">
                     {relatedCourse.title}
                   </h3>
@@ -385,7 +393,7 @@ export default async function CourseDetailPage({
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-xs text-gray-600">
-                      <span className="px-2 py-1 bg-gray-100 rounded">{relatedCourse.category}</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded">{relatedCourse.category.name}</span>
                       <span>{relatedCourse.cpdHours} hrs</span>
                     </div>
                     <div className="text-base font-bold text-gray-900">
@@ -398,7 +406,7 @@ export default async function CourseDetailPage({
           </div>
         </div>
       )}
-    </div>
+      </div>
     </CourseDetailClient>
   )
 }

@@ -40,7 +40,8 @@ async function getCourseForReview(courseId: string) {
   return course
 }
 
-export default async function CourseReviewPage({ params }: { params: { id: string } }) {
+export default async function CourseReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth()
 
   if (!session?.user) {
@@ -51,7 +52,7 @@ export default async function CourseReviewPage({ params }: { params: { id: strin
     redirect('/dashboard')
   }
 
-  const course = await getCourseForReview(params.id)
+  const course = await getCourseForReview(id)
 
   if (!course) {
     notFound()

@@ -10,7 +10,7 @@ export default async function HomePage() {
 
   const trendingCourses = await prisma.course.findMany({
     where: {
-      status: 'Published',
+      published: true,
       updatedAt: {
         gte: sevenDaysAgo,
       },
@@ -19,7 +19,12 @@ export default async function HomePage() {
       creator: {
         select: {
           name: true,
-          image: true,
+          avatar: true,
+        },
+      },
+      category: {
+        select: {
+          name: true,
         },
       },
     },
@@ -219,23 +224,25 @@ export default async function HomePage() {
                     </div>
                   )}
                   <div className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      {course.creator.image ? (
-                        <div className="relative w-6 h-6 rounded-full overflow-hidden">
-                          <Image
-                            src={course.creator.image}
-                            alt={course.creator.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-medium">
-                          {course.creator.name.charAt(0)}
-                        </div>
-                      )}
-                      <span className="text-sm text-gray-600">{course.creator.name}</span>
-                    </div>
+                    {course.creator && (
+                      <div className="flex items-center gap-2 mb-3">
+                        {course.creator.avatar ? (
+                          <div className="relative w-6 h-6 rounded-full overflow-hidden">
+                            <Image
+                              src={course.creator.avatar}
+                              alt={course.creator.name || 'Creator'}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-medium">
+                            {course.creator.name?.charAt(0) || 'C'}
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-600">{course.creator.name}</span>
+                      </div>
+                    )}
                     <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                       {course.title}
                     </h3>
@@ -244,7 +251,7 @@ export default async function HomePage() {
                     </p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="px-2 py-1 bg-gray-100 rounded">{course.category}</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded">{course.category.name}</span>
                         <span>{course.cpdHours} hrs</span>
                       </div>
                       <div className="text-lg font-bold text-gray-900">

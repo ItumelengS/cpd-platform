@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const [courses, creators] = await Promise.all([
       prisma.course.findMany({
         where: {
-          status: 'Published',
+          published: true,
           title: {
             contains: query,
             mode: 'insensitive',
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
           name: true,
         },
         orderBy: {
-          totalFollowers: 'desc',
+          createdAt: 'desc',
         },
         take: 2,
       }),

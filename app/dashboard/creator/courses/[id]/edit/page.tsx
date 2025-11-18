@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import EditCourseForm from './EditCourseForm';
@@ -7,9 +6,10 @@ import EditCourseForm from './EditCourseForm';
 export default async function EditCoursePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const session = await getServerSession(authOptions);
+  const { id } = await params;
+  const session = await auth();
 
   if (!session?.user?.id) {
     redirect('/auth/signin');
@@ -17,13 +17,15 @@ export default async function EditCoursePage({
 
   // Fetch course with sections and questions
   const course = await prisma.course.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       sections: {
+        include: {
+          questions: {
+            orderBy: { order: 'asc' },
+          },
+        },
         orderBy: { order: 'asc' },
-      },
-      questions: {
-        orderBy: { createdAt: 'asc' },
       },
     },
   });
@@ -66,7 +68,7 @@ export default async function EditCoursePage({
           </div>
         </div>
       ) : (
-        <EditCourseForm course={course} />
+        <EditCourseForm course={course as any} />
       )}
     </div>
   );

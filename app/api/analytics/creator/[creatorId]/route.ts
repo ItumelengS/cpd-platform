@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { getCreatorAnalytics } from '@/lib/analytics';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { creatorId: string } }
+  { params }: { params: Promise<{ creatorId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json(
@@ -18,7 +17,7 @@ export async function GET(
       );
     }
 
-    const { creatorId } = params;
+    const { creatorId } = await params;
     const { searchParams } = new URL(request.url);
     const timeRange = (searchParams.get('timeRange') || '30d') as '7d' | '30d' | '90d' | 'all';
 

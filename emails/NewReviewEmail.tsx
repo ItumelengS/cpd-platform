@@ -60,7 +60,7 @@ export default function NewReviewEmail({
             {/* Course Info */}
             <Section style={courseBox}>
               <Text style={courseLabel}>Course</Text>
-              <Text style={courseName}>{courseName}</Text>
+              <Text style={courseNameStyle}>{courseName}</Text>
             </Section>
 
             {/* Rating */}
@@ -194,7 +194,7 @@ const courseLabel = {
   letterSpacing: '1px',
 };
 
-const courseName = {
+const courseNameStyle = {
   color: '#1F2937',
   fontSize: '18px',
   fontWeight: 'bold',

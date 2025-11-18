@@ -33,7 +33,7 @@ export default function CreatorSetupPage() {
     return null;
   }
 
-  if (session?.user?.creatorStatus !== 'APPROVED') {
+  if ((session?.user as any)?.creatorStatus !== 'APPROVED') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

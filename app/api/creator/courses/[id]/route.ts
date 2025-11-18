@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -17,15 +16,19 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     // Fetch course with sections and questions
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         sections: {
+          include: {
+            questions: {
+              orderBy: { order: 'asc' },
+            },
+          },
           orderBy: { order: 'asc' },
-        },
-        questions: {
-          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -57,11 +60,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -69,9 +72,11 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
+
     // Fetch existing course
     const existingCourse = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingCourse) {
@@ -137,25 +142,25 @@ export async function PUT(
     const result = await prisma.$transaction(async (tx) => {
       // Update course
       const course = await tx.course.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           title,
           slug,
-          category,
+          categoryId: category,
           description,
           difficulty: difficulty || 'BEGINNER',
           cpdHours: parseFloat(cpdHours) || 1,
-          thumbnailUrl,
+          thumbnail: thumbnailUrl,
         },
       });
 
       // Delete existing sections and questions
       await tx.section.deleteMany({
-        where: { courseId: params.id },
+        where: { courseId: id },
       });
 
       await tx.question.deleteMany({
-        where: { courseId: params.id },
+        where: { courseId: id },
       });
 
       // Create new sections
@@ -168,10 +173,10 @@ export async function PUT(
               contentType: section.contentType,
               content: section.content,
               videoUrl: section.videoUrl,
-              videoThumbnailUrl: section.videoThumbnailUrl,
               pdfUrl: section.pdfUrl,
               order: section.order,
               minTimeSeconds: section.minTimeSeconds || 60,
+              duration: section.duration,
             },
           });
         })
@@ -198,6 +203,7 @@ export async function PUT(
               optionD: question.optionD,
               correctAnswer: question.correctAnswer,
               explanation: question.explanation,
+              order: question.order || 0,
             },
           });
         })
@@ -222,11 +228,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -234,9 +240,11 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     // Fetch course
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!course) {
@@ -264,7 +272,7 @@ export async function DELETE(
 
     // Delete course (sections and questions will be deleted via cascade)
     await prisma.course.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({

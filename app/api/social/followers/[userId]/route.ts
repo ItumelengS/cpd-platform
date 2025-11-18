@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
     const perPage = 20;
@@ -31,12 +31,8 @@ export async function GET(
               id: true,
               name: true,
               email: true,
-              image: true,
-              creatorProfile: {
-                select: {
-                  specialty: true,
-                },
-              },
+              avatar: true,
+              specialty: true,
             },
           },
           createdAt: true,
@@ -58,8 +54,8 @@ export async function GET(
     const formattedFollowers = followers.map((follow) => ({
       id: follow.follower.id,
       name: follow.follower.name,
-      avatar: follow.follower.image,
-      specialty: follow.follower.creatorProfile?.specialty || null,
+      avatar: follow.follower.avatar,
+      specialty: follow.follower.specialty || null,
       followedAt: follow.createdAt,
     }));
 

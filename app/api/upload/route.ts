@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { put } from '@vercel/blob';
 
@@ -26,7 +25,7 @@ function getFileCategory(mimeType: string): 'PDF' | 'VIDEO' | 'IMAGE' | null {
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -89,7 +88,7 @@ export async function POST(request: NextRequest) {
         fileUrl: blob.url,
         fileType: file.type,
         fileSize: file.size,
-        uploadedById: session.user.id,
+        userId: session.user.id,
       },
     });
 

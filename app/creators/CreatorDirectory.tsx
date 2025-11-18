@@ -7,7 +7,7 @@ import Image from 'next/image';
 interface Creator {
   id: string;
   name: string;
-  image: string | null;
+  avatar: string | null;
   specialty: string | null;
   bio: string | null;
   country: string | null;
@@ -359,9 +359,9 @@ function CreatorCard({ creator, isFollowing, onFollow }: CreatorCardProps) {
     <div className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow p-6">
       <div className="flex items-start gap-4 mb-4">
         <a href={`/creators/${creator.id}`} className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-          {creator.image ? (
+          {creator.avatar ? (
             <Image
-              src={creator.image}
+              src={creator.avatar}
               alt={creator.name}
               fill
               className="object-cover"

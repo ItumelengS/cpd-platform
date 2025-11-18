@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -25,7 +24,7 @@ export async function GET() {
       include: {
         course: {
           select: {
-            category: true,
+            categoryId: true,
             difficulty: true,
           },
         },
@@ -33,15 +32,15 @@ export async function GET() {
       distinct: ['courseId'],
     });
 
-    const enrolledCategories = [...new Set(enrolledCourses.map(e => e.course.category))];
+    const enrolledCategories = [...new Set(enrolledCourses.map(e => e.course.categoryId))];
 
     if (enrolledCategories.length > 0) {
       const enrolledCourseIds = enrolledCourses.map(e => e.courseId);
 
       const interestBasedCourses = await prisma.course.findMany({
         where: {
-          status: 'Published',
-          category: {
+          published: true,
+          categoryId: {
             in: enrolledCategories,
           },
           id: {
@@ -52,7 +51,12 @@ export async function GET() {
           creator: {
             select: {
               name: true,
-              image: true,
+              avatar: true,
+            },
+          },
+          category: {
+            select: {
+              name: true,
             },
           },
         },
@@ -71,12 +75,12 @@ export async function GET() {
             description: course.description,
             thumbnail: course.thumbnail,
             slug: course.slug,
-            category: course.category,
+            category: course.category.name,
             difficulty: course.difficulty,
             cpdHours: course.cpdHours,
             price: course.price,
-            creatorName: course.creator.name,
-            creatorAvatar: course.creator.image,
+            creatorName: course.creator?.name,
+            creatorAvatar: course.creator?.avatar,
             reason: 'Your interests',
           })),
         });
@@ -99,7 +103,7 @@ export async function GET() {
 
       const creatorCourses = await prisma.course.findMany({
         where: {
-          status: 'Published',
+          published: true,
           creatorId: {
             in: creatorIds,
           },
@@ -111,7 +115,12 @@ export async function GET() {
           creator: {
             select: {
               name: true,
-              image: true,
+              avatar: true,
+            },
+          },
+          category: {
+            select: {
+              name: true,
             },
           },
         },
@@ -130,12 +139,12 @@ export async function GET() {
             description: course.description,
             thumbnail: course.thumbnail,
             slug: course.slug,
-            category: course.category,
+            category: course.category.name,
             difficulty: course.difficulty,
             cpdHours: course.cpdHours,
             price: course.price,
-            creatorName: course.creator.name,
-            creatorAvatar: course.creator.image,
+            creatorName: course.creator?.name,
+            creatorAvatar: course.creator?.avatar,
             reason: 'Following',
           })),
         });
@@ -148,7 +157,7 @@ export async function GET() {
 
     const popularCourses = await prisma.course.findMany({
       where: {
-        status: 'Published',
+        published: true,
         updatedAt: {
           gte: sevenDaysAgo,
         },
@@ -157,7 +166,12 @@ export async function GET() {
         creator: {
           select: {
             name: true,
-            image: true,
+            avatar: true,
+          },
+        },
+        category: {
+          select: {
+            name: true,
           },
         },
       },
@@ -176,12 +190,12 @@ export async function GET() {
           description: course.description,
           thumbnail: course.thumbnail,
           slug: course.slug,
-          category: course.category,
+          category: course.category.name,
           difficulty: course.difficulty,
           cpdHours: course.cpdHours,
           price: course.price,
-          creatorName: course.creator.name,
-          creatorAvatar: course.creator.image,
+          creatorName: course.creator?.name,
+          creatorAvatar: course.creator?.avatar,
           reason: 'Trending',
         })),
       });
@@ -195,7 +209,7 @@ export async function GET() {
 
     const newCourses = await prisma.course.findMany({
       where: {
-        status: 'Published',
+        published: true,
         publishedAt: {
           gte: thirtyDaysAgo,
         },
@@ -207,7 +221,12 @@ export async function GET() {
         creator: {
           select: {
             name: true,
-            image: true,
+            avatar: true,
+          },
+        },
+        category: {
+          select: {
+            name: true,
           },
         },
       },
@@ -226,12 +245,12 @@ export async function GET() {
           description: course.description,
           thumbnail: course.thumbnail,
           slug: course.slug,
-          category: course.category,
+          category: course.category.name,
           difficulty: course.difficulty,
           cpdHours: course.cpdHours,
           price: course.price,
-          creatorName: course.creator.name,
-          creatorAvatar: course.creator.image,
+          creatorName: course.creator?.name,
+          creatorAvatar: course.creator?.avatar,
           reason: 'New',
         })),
       });
@@ -241,13 +260,18 @@ export async function GET() {
     if (sections.length === 0) {
       const generalCourses = await prisma.course.findMany({
         where: {
-          status: 'Published',
+          published: true,
         },
         include: {
           creator: {
             select: {
               name: true,
-              image: true,
+              avatar: true,
+            },
+          },
+          category: {
+            select: {
+              name: true,
             },
           },
         },
@@ -265,12 +289,12 @@ export async function GET() {
           description: course.description,
           thumbnail: course.thumbnail,
           slug: course.slug,
-          category: course.category,
+          category: course.category.name,
           difficulty: course.difficulty,
           cpdHours: course.cpdHours,
           price: course.price,
-          creatorName: course.creator.name,
-          creatorAvatar: course.creator.image,
+          creatorName: course.creator?.name,
+          creatorAvatar: course.creator?.avatar,
           reason: 'Popular',
         })),
       });

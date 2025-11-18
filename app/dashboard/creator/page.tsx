@@ -133,7 +133,12 @@ async function getCreatorDashboardData(userId: string) {
   ])
 
   // Build activities array
-  const activities = []
+  const activities: Array<{
+    type: 'follower' | 'course' | 'publication';
+    message: string;
+    timestamp: Date;
+    link: string;
+  }> = []
 
   recentFollows.forEach((follow) => {
     activities.push({

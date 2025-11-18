@@ -19,11 +19,11 @@ export default async function AdminRevenuePage() {
 
   // Get views by content type
   const courseViews = await prisma.view.count({
-    where: { contentType: 'course' }
+    where: { courseId: { not: null } }
   });
 
-  const creatorViews = await prisma.view.count({
-    where: { contentType: 'creator' }
+  const publicationViews = await prisma.view.count({
+    where: { publicationId: { not: null } }
   });
 
   // Get views grouped by day (last 30 days)
@@ -182,7 +182,9 @@ export default async function AdminRevenuePage() {
                             {monthNames[revenue.month - 1]} {revenue.year}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Calculated {new Date(revenue.calculatedAt).toLocaleDateString()}
+                            {revenue.calculatedAt
+                              ? `Calculated ${new Date(revenue.calculatedAt).toLocaleDateString()}`
+                              : 'Not yet calculated'}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-right text-gray-900 font-semibold">
@@ -329,12 +331,12 @@ export default async function AdminRevenuePage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-gray-700 font-medium">Creator Profiles</span>
-                  <span className="text-gray-900 font-semibold">{creatorViews.toLocaleString()}</span>
+                  <span className="text-gray-900 font-semibold">{publicationViews.toLocaleString()}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-purple-600 h-2 rounded-full"
-                    style={{ width: `${totalViews > 0 ? (creatorViews / totalViews) * 100 : 0}%` }}
+                    style={{ width: `${totalViews > 0 ? (publicationViews / totalViews) * 100 : 0}%` }}
                   />
                 </div>
               </div>
@@ -363,13 +365,13 @@ export default async function AdminRevenuePage() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-gray-700 font-medium">Creator Profiles</span>
                   <span className="text-gray-900 font-semibold">
-                    {formatRevenue(estimateRevenue(creatorViews))}
+                    {formatRevenue(estimateRevenue(publicationViews))}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-green-600 h-2 rounded-full"
-                    style={{ width: `${totalViews > 0 ? (creatorViews / totalViews) * 100 : 0}%` }}
+                    style={{ width: `${totalViews > 0 ? (publicationViews / totalViews) * 100 : 0}%` }}
                   />
                 </div>
               </div>

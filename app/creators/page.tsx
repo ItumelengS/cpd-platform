@@ -28,15 +28,13 @@ export default async function CreatorPage({ searchParams }: CreatorPageProps) {
     include: {
       _count: {
         select: {
-          coursesAsCreator: {
-            where: { status: 'Published' },
-          },
+          createdCourses: true,
           followers: true,
         },
       },
     },
     orderBy: {
-      totalFollowers: 'desc',
+      createdAt: 'desc',
     },
     take: 6,
   });
@@ -75,12 +73,12 @@ export default async function CreatorPage({ searchParams }: CreatorPageProps) {
                   key={creator.id}
                   creator={{
                     id: creator.id,
-                    name: creator.name,
-                    image: creator.image,
-                    specialty: creator.creatorSpecialty,
-                    bio: creator.creatorBio,
+                    name: creator.name || 'Unknown Creator',
+                    avatar: creator.avatar || null,
+                    specialty: creator.specialty || null,
+                    bio: creator.bio || null,
                     followers: creator._count.followers,
-                    courses: creator._count.coursesAsCreator,
+                    courses: creator._count.createdCourses,
                   }}
                 />
               ))}
@@ -109,7 +107,7 @@ interface FeaturedCreatorCardProps {
   creator: {
     id: string;
     name: string;
-    image: string | null;
+    avatar: string | null;
     specialty: string | null;
     bio: string | null;
     followers: number;
@@ -125,9 +123,9 @@ function FeaturedCreatorCard({ creator }: FeaturedCreatorCardProps) {
     >
       <div className="flex items-start gap-4">
         <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-          {creator.image ? (
+          {creator.avatar ? (
             <img
-              src={creator.image}
+              src={creator.avatar}
               alt={creator.name}
               className="w-full h-full object-cover"
             />

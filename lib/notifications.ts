@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { sendEmail, checkEmailPreference, getUserEmail } from '@/lib/email';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { render } from '@react-email/render';
 import NewFollowerEmail from '@/emails/NewFollowerEmail';
 import CoursePublishedEmail from '@/emails/CoursePublishedEmail';
 import CourseRejectedEmail from '@/emails/CourseRejectedEmail';
@@ -179,7 +179,7 @@ async function sendEmailNotification(
     switch (type) {
       case 'NEW_FOLLOWER':
         subject = `${data.followerName} started following you`;
-        emailHtml = renderToStaticMarkup(
+        emailHtml = await render(
           NewFollowerEmail({
             followerName: data.followerName || 'Someone',
             followerAvatar: data.followerAvatar,
@@ -194,7 +194,7 @@ async function sendEmailNotification(
       case 'COURSE_APPROVED':
       case 'COURSE_PUBLISHED':
         subject = `Your course "${data.courseTitle}" is now live!`;
-        emailHtml = renderToStaticMarkup(
+        emailHtml = await render(
           CoursePublishedEmail({
             courseName: data.courseTitle || 'Your Course',
             courseSlug: data.courseSlug || '',
@@ -205,7 +205,7 @@ async function sendEmailNotification(
 
       case 'COURSE_REJECTED':
         subject = `Update on your course submission: "${data.courseTitle}"`;
-        emailHtml = renderToStaticMarkup(
+        emailHtml = await render(
           CourseRejectedEmail({
             courseName: data.courseTitle || 'Your Course',
             rejectionReason: data.reason || 'No reason provided',
@@ -216,7 +216,7 @@ async function sendEmailNotification(
 
       case 'NEW_REVIEW':
         subject = `New ${data.rating}-star review on "${data.courseTitle}"`;
-        emailHtml = renderToStaticMarkup(
+        emailHtml = await render(
           NewReviewEmail({
             reviewerName: data.reviewerName || 'A user',
             rating: data.rating || 5,

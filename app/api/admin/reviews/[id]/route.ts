@@ -6,7 +6,7 @@ import { updateCourseRating } from '@/lib/reviews';
 // PATCH: Update review status (admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -15,7 +15,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const reviewId = params.id;
+    const { id: reviewId } = await params;
     const body = await request.json();
     const { hidden, reported } = body;
 

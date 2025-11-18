@@ -8,7 +8,7 @@ interface Course {
   id: string;
   title: string;
   slug: string;
-  category: string;
+  categoryId: string;
   isDraft: boolean;
   published: boolean;
   submittedAt: Date | null;
@@ -17,7 +17,6 @@ interface Course {
   createdAt: Date;
   _count: {
     sections: number;
-    questions: number;
   };
 }
 
@@ -113,7 +112,6 @@ export default function CourseList({
           <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
           <div className="flex items-center gap-3 text-sm text-gray-600">
             {getStatusBadge(course)}
-            <span>{course.category}</span>
           </div>
         </div>
       </div>
@@ -122,10 +120,6 @@ export default function CourseList({
         <div>
           <span className="text-gray-500">Sections:</span>
           <span className="ml-2 font-medium">{course._count.sections}</span>
-        </div>
-        <div>
-          <span className="text-gray-500">Questions:</span>
-          <span className="ml-2 font-medium">{course._count.questions}</span>
         </div>
         <div>
           <span className="text-gray-500">Views:</span>

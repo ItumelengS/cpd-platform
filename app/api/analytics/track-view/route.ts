@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { trackView } from '@/lib/analytics';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const body = await request.json();
 
     const { contentType, contentId } = body;
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get creator ID based on content type
-    let creatorId: string;
+    let creatorId: string | null;
 
     if (contentType === 'course') {
       const course = await prisma.course.findUnique({
@@ -46,7 +45,7 @@ export async function POST(request: NextRequest) {
     } else {
       const publication = await prisma.publication.findUnique({
         where: { id: contentId },
-        select: { authorId: true },
+        select: { creatorId: true },
       });
 
       if (!publication) {
@@ -56,7 +55,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      creatorId = publication.authorId;
+      creatorId = publication.creatorId;
+    }
+
+    if (!creatorId) {
+      return NextResponse.json(
+        { error: 'Creator not found for this content' },
+        { status: 404 }
+      );
     }
 
     // Get user ID from session (optional for anonymous tracking)

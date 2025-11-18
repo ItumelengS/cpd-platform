@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         bio: null,
         avatar: null,
         cvUrl: null,
-        socialLinks: null,
+        socialLinks: Prisma.JsonNull,
         specialty: null,
         institution: null,
         country: null,
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   // Cancel deletion request
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json(

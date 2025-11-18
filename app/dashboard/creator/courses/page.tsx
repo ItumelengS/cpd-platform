@@ -1,12 +1,11 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import CourseList from './CourseList';
 
 export default async function CreatorCoursesPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     redirect('/auth/signin');
@@ -31,7 +30,6 @@ export default async function CreatorCoursesPage() {
       _count: {
         select: {
           sections: true,
-          questions: true,
         },
       },
     },

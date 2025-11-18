@@ -1,11 +1,10 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import EarningsDashboard from './EarningsDashboard';
 
 export default async function CreatorEarningsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   // Check if user is authenticated and is a creator
   if (!session?.user) {
@@ -102,7 +101,7 @@ export default async function CreatorEarningsPage() {
     netEarnings: earning.netEarnings,
     paid: earning.paid,
     paidAt: earning.paidAt ? earning.paidAt.toISOString() : null,
-    calculatedAt: earning.revenue.calculatedAt.toISOString(),
+    calculatedAt: earning.revenue.calculatedAt ? earning.revenue.calculatedAt.toISOString() : null,
     revenuePerView: earning.revenue.revenuePerView,
   }));
 

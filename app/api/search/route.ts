@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Search Courses
     if (type === 'all' || type === 'courses') {
       const courseFilters: any = {
-        status: 'Published',
+        published: true,
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
           { description: { contains: query, mode: 'insensitive' } },
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       };
 
       if (category) {
-        courseFilters.category = category;
+        courseFilters.categoryId = category;
       }
 
       if (difficulty) {
@@ -74,6 +74,11 @@ export async function GET(request: NextRequest) {
         where: courseFilters,
         include: {
           creator: {
+            select: {
+              name: true,
+            },
+          },
+          category: {
             select: {
               name: true,
             },
@@ -125,13 +130,13 @@ export async function GET(request: NextRequest) {
         description: course.description,
         image: course.thumbnail,
         slug: course.slug,
-        category: course.category,
+        category: course.category.name,
         difficulty: course.difficulty,
         cpdHours: course.cpdHours,
         price: course.price,
         rating: course.avgRating,
         totalRatings: course._count.reviews,
-        creatorName: course.creator.name,
+        creatorName: course.creator?.name,
       }));
 
       if (type === 'courses') {
@@ -149,7 +154,7 @@ export async function GET(request: NextRequest) {
         creatorStatus: 'APPROVED',
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
-          { creatorBio: { contains: query, mode: 'insensitive' } },
+          { bio: { contains: query, mode: 'insensitive' } },
         ],
       };
 
@@ -168,9 +173,8 @@ export async function GET(request: NextRequest) {
         include: {
           _count: {
             select: {
-              coursesAsCreator: {
-                where: { status: 'Published' },
-              },
+              createdCourses: true,
+              followers: true,
             },
           },
         },
@@ -183,12 +187,12 @@ export async function GET(request: NextRequest) {
         id: creator.id,
         type: 'creator' as const,
         title: creator.name,
-        description: creator.creatorBio || '',
-        creatorAvatar: creator.image || undefined,
+        description: creator.bio || '',
+        creatorAvatar: creator.avatar || undefined,
         slug: creator.id,
-        specialty: creator.creatorSpecialty || undefined,
-        followers: creator.totalFollowers,
-        courses: creator._count.coursesAsCreator,
+        specialty: creator.specialty || undefined,
+        followers: creator._count.followers,
+        courses: creator._count.createdCourses,
       }));
 
       if (type === 'creators') {
@@ -202,31 +206,36 @@ export async function GET(request: NextRequest) {
     // Search Publications
     if (type === 'all' || type === 'publications') {
       const publicationFilters: any = {
-        status: 'Published',
+        published: true,
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
-          { content: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
         ],
       };
 
       if (category) {
-        publicationFilters.category = category;
+        publicationFilters.categoryId = category;
       }
 
       let publicationOrderBy: any = {};
 
       if (sort === 'popular') {
-        publicationOrderBy = { views: 'desc' };
+        publicationOrderBy = { totalViews: 'desc' };
       } else if (sort === 'newest') {
-        publicationOrderBy = { publishedAt: 'desc' };
+        publicationOrderBy = { publishedDate: 'desc' };
       } else {
-        publicationOrderBy = { publishedAt: 'desc' };
+        publicationOrderBy = { publishedDate: 'desc' };
       }
 
       const publications = await prisma.publication.findMany({
         where: publicationFilters,
         include: {
-          author: {
+          creator: {
+            select: {
+              name: true,
+            },
+          },
+          category: {
             select: {
               name: true,
             },
@@ -241,11 +250,11 @@ export async function GET(request: NextRequest) {
         id: pub.id,
         type: 'publication' as const,
         title: pub.title,
-        description: pub.excerpt || pub.content.substring(0, 200),
-        slug: pub.slug,
-        category: pub.category,
-        creatorName: pub.author.name,
-        publishedAt: pub.publishedAt?.toISOString(),
+        description: pub.description.substring(0, 200),
+        slug: pub.id,
+        category: pub.category.name,
+        creatorName: pub.creator?.name,
+        publishedAt: pub.publishedDate?.toISOString(),
       }));
 
       if (type === 'publications') {

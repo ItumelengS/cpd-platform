@@ -42,8 +42,7 @@ export async function trackView(
   // Create the view record
   const view = await prisma.view.create({
     data: {
-      contentType,
-      contentId,
+      ...(contentType === 'course' ? { courseId: contentId } : { publicationId: contentId }),
       creatorId,
       userId: userId || null,
       ipAddress,
@@ -173,12 +172,16 @@ export async function getCreatorAnalytics(
   }>();
 
   for (const view of views) {
-    const key = `${view.contentType}-${view.contentId}`;
+    const contentType = view.courseId ? 'course' : 'publication';
+    const contentId = view.courseId || view.publicationId;
+    if (!contentId) continue;
+
+    const key = `${contentType}-${contentId}`;
     if (!contentMap.has(key)) {
       contentMap.set(key, {
-        id: view.contentId,
+        id: contentId,
         title: '',
-        type: view.contentType,
+        type: contentType,
         views: 0,
         totalDuration: 0,
         completed: 0,
@@ -209,11 +212,11 @@ export async function getCreatorAnalytics(
       } else if (data.type === 'publication') {
         const publication = await prisma.publication.findUnique({
           where: { id: data.id },
-          select: { title: true, slug: true },
+          select: { title: true },
         });
         if (publication) {
           title = publication.title;
-          slug = publication.slug;
+          slug = data.id; // Publications use ID as slug
         }
       }
 
