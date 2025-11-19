@@ -839,11 +839,331 @@ Continuous improvement:
   })
   console.log("✓ Created section questions and final quiz for Course 2")
 
+  // Additional Courses
+  console.log("Creating additional courses...")
+
+  const additionalCourses = await Promise.all([
+    // Diagnostic Imaging Courses
+    prisma.course.create({
+      data: {
+        title: "CT Imaging Protocols and Optimization",
+        slug: "ct-imaging-protocols-optimization",
+        description: "Master CT imaging protocols, dose optimization techniques, and advanced reconstruction methods for superior diagnostic quality.",
+        categoryId: categories[0].id,
+        cpdHours: 3.0,
+        difficulty: "Advanced",
+        published: true,
+        price: 1800,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "MRI Physics and Safety",
+        slug: "mri-physics-safety",
+        description: "Comprehensive guide to MRI physics, safety protocols, and contraindications for safe and effective imaging.",
+        categoryId: categories[0].id,
+        cpdHours: 2.5,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1440,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Ultrasound Imaging Techniques",
+        slug: "ultrasound-imaging-techniques",
+        description: "Essential ultrasound techniques for diagnostic imaging including Doppler, musculoskeletal, and abdominal scanning.",
+        categoryId: categories[0].id,
+        cpdHours: 2.0,
+        difficulty: "Beginner",
+        published: true,
+        price: 900,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Pediatric Imaging Best Practices",
+        slug: "pediatric-imaging-best-practices",
+        description: "Specialized protocols and dose reduction strategies for imaging pediatric patients across all modalities.",
+        categoryId: categories[0].id,
+        cpdHours: 2.5,
+        difficulty: "Intermediate",
+        published: true,
+        price: 0,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Interventional Radiology Fundamentals",
+        slug: "interventional-radiology-fundamentals",
+        description: "Introduction to interventional radiology procedures, equipment, and patient care considerations.",
+        categoryId: categories[0].id,
+        cpdHours: 3.5,
+        difficulty: "Advanced",
+        published: true,
+        price: 2160,
+      },
+    }),
+
+    // Radiotherapy Courses
+    prisma.course.create({
+      data: {
+        title: "IMRT and VMAT Planning",
+        slug: "imrt-vmat-planning",
+        description: "Advanced treatment planning techniques for intensity-modulated radiation therapy and volumetric arc therapy.",
+        categoryId: categories[1].id,
+        cpdHours: 4.0,
+        difficulty: "Advanced",
+        published: true,
+        price: 2700,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Radiation Oncology for Breast Cancer",
+        slug: "radiation-oncology-breast-cancer",
+        description: "Evidence-based approaches to breast cancer radiotherapy including partial breast irradiation and hypofractionation.",
+        categoryId: categories[1].id,
+        cpdHours: 3.0,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1800,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Stereotactic Radiotherapy (SBRT)",
+        slug: "stereotactic-radiotherapy-sbrt",
+        description: "Precision radiotherapy techniques for treating small tumors with high-dose, limited-fraction treatments.",
+        categoryId: categories[1].id,
+        cpdHours: 3.5,
+        difficulty: "Advanced",
+        published: true,
+        price: 2340,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Patient Setup and Positioning",
+        slug: "patient-setup-positioning",
+        description: "Accurate patient positioning techniques and immobilization devices for consistent treatment delivery.",
+        categoryId: categories[1].id,
+        cpdHours: 2.0,
+        difficulty: "Beginner",
+        published: true,
+        price: 0,
+      },
+    }),
+
+    // Nuclear Medicine Courses
+    prisma.course.create({
+      data: {
+        title: "PET/CT in Oncology",
+        slug: "pet-ct-oncology",
+        description: "Clinical applications of PET/CT imaging in cancer diagnosis, staging, and treatment monitoring.",
+        categoryId: categories[2].id,
+        cpdHours: 2.5,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1620,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Cardiac Nuclear Medicine",
+        slug: "cardiac-nuclear-medicine",
+        description: "Myocardial perfusion imaging, cardiac PET, and nuclear cardiology protocols for assessing heart function.",
+        categoryId: categories[2].id,
+        cpdHours: 3.0,
+        difficulty: "Advanced",
+        published: true,
+        price: 1980,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Radiopharmacy Fundamentals",
+        slug: "radiopharmacy-fundamentals",
+        description: "Preparation, quality control, and safe handling of radiopharmaceuticals in nuclear medicine.",
+        categoryId: categories[2].id,
+        cpdHours: 2.5,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1440,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Thyroid and Endocrine Nuclear Medicine",
+        slug: "thyroid-endocrine-nuclear-medicine",
+        description: "Nuclear medicine imaging and therapy for thyroid disorders and endocrine conditions.",
+        categoryId: categories[2].id,
+        cpdHours: 2.0,
+        difficulty: "Beginner",
+        published: true,
+        price: 900,
+      },
+    }),
+
+    // Radiation Protection Courses
+    prisma.course.create({
+      data: {
+        title: "Radiation Safety in Pregnancy",
+        slug: "radiation-safety-pregnancy",
+        description: "Managing radiation exposure for pregnant patients and staff with evidence-based guidelines.",
+        categoryId: categories[3].id,
+        cpdHours: 1.5,
+        difficulty: "Intermediate",
+        published: true,
+        price: 720,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Fluoroscopy Safety and Dose Management",
+        slug: "fluoroscopy-safety-dose-management",
+        description: "Advanced dose reduction techniques and safety protocols for fluoroscopic procedures.",
+        categoryId: categories[3].id,
+        cpdHours: 2.0,
+        difficulty: "Intermediate",
+        published: true,
+        price: 0,
+      },
+    }),
+
+    // Radiobiology Courses
+    prisma.course.create({
+      data: {
+        title: "Radiobiology for Radiation Therapists",
+        slug: "radiobiology-radiation-therapists",
+        description: "Essential radiobiological principles for understanding radiation therapy effects and fractionation.",
+        categoryId: categories[4].id,
+        cpdHours: 2.5,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1260,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "DNA Damage and Repair Mechanisms",
+        slug: "dna-damage-repair-mechanisms",
+        description: "Molecular basis of radiation-induced DNA damage and cellular repair pathways.",
+        categoryId: categories[4].id,
+        cpdHours: 3.0,
+        difficulty: "Advanced",
+        published: true,
+        price: 1800,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Radiation Effects on Normal Tissues",
+        slug: "radiation-effects-normal-tissues",
+        description: "Understanding and managing radiation-induced toxicity in normal tissues during cancer treatment.",
+        categoryId: categories[4].id,
+        cpdHours: 2.0,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1080,
+      },
+    }),
+
+    // Medical Physics Courses
+    prisma.course.create({
+      data: {
+        title: "Quality Assurance in Radiotherapy",
+        slug: "quality-assurance-radiotherapy",
+        description: "Comprehensive QA protocols for linear accelerators, treatment planning systems, and imaging devices.",
+        categoryId: categories[5].id,
+        cpdHours: 3.5,
+        difficulty: "Advanced",
+        published: true,
+        price: 2340,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Dosimetry and Radiation Measurements",
+        slug: "dosimetry-radiation-measurements",
+        description: "Principles of radiation dosimetry, measurement techniques, and calibration procedures.",
+        categoryId: categories[5].id,
+        cpdHours: 3.0,
+        difficulty: "Advanced",
+        published: true,
+        price: 1980,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Treatment Planning Fundamentals",
+        slug: "treatment-planning-fundamentals",
+        description: "Introduction to radiation treatment planning including beam arrangement and dose calculation.",
+        categoryId: categories[5].id,
+        cpdHours: 2.5,
+        difficulty: "Beginner",
+        published: true,
+        price: 0,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Monte Carlo Simulations in Medical Physics",
+        slug: "monte-carlo-simulations",
+        description: "Advanced computational techniques for modeling radiation transport and dose distributions.",
+        categoryId: categories[5].id,
+        cpdHours: 4.0,
+        difficulty: "Advanced",
+        published: true,
+        price: 2880,
+      },
+    }),
+
+    // More Diagnostic Imaging
+    prisma.course.create({
+      data: {
+        title: "Chest Radiography: Advanced Interpretation",
+        slug: "chest-radiography-advanced",
+        description: "Systematic approach to chest X-ray interpretation with focus on subtle findings and patterns.",
+        categoryId: categories[0].id,
+        cpdHours: 2.0,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1080,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Musculoskeletal Imaging Essentials",
+        slug: "musculoskeletal-imaging-essentials",
+        description: "Imaging techniques and interpretation for bone and soft tissue disorders.",
+        categoryId: categories[0].id,
+        cpdHours: 2.5,
+        difficulty: "Intermediate",
+        published: true,
+        price: 1440,
+      },
+    }),
+    prisma.course.create({
+      data: {
+        title: "Contrast Media: Safety and Protocols",
+        slug: "contrast-media-safety",
+        description: "Evidence-based guidelines for safe contrast administration and managing adverse reactions.",
+        categoryId: categories[0].id,
+        cpdHours: 1.5,
+        difficulty: "Beginner",
+        published: true,
+        price: 720,
+      },
+    }),
+  ])
+  console.log(`✓ Created ${additionalCourses.length} additional courses`)
+
   console.log("✅ Database seeded successfully!")
   console.log("\n📊 Summary:")
   console.log(`- ${categories.length} categories`)
   console.log("- 2 users (admin@example.com, user@example.com)")
-  console.log("- 2 complete courses with sections and quizzes")
+  console.log(`- ${2 + additionalCourses.length} courses total (2 with full content + ${additionalCourses.length} course shells)`)
   console.log("\n🔐 Login credentials:")
   console.log("Admin: admin@example.com / admin123")
   console.log("User: user@example.com / password123")
