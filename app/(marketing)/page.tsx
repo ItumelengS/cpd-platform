@@ -63,7 +63,7 @@ export default async function HomePage() {
               <Link href="#how-it-works" className="text-gray-700 hover:text-blue-600 transition">
                 How It Works
               </Link>
-              <Link href="#pricing" className="text-gray-700 hover:text-blue-600 transition">
+              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition">
                 Pricing
               </Link>
               <Link href="#about" className="text-gray-700 hover:text-blue-600 transition">
