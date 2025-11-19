@@ -289,7 +289,7 @@ export default async function CourseDetailPage({
               <div className="bg-white rounded-lg p-6 shadow-lg sticky top-6">
               <div className="text-center mb-6">
                 <div className="text-4xl font-bold text-gray-900 mb-2">
-                  {course.price === 0 ? "Free" : `$${course.price}`}
+                  {course.price === 0 ? "Free" : `R${course.price}`}
                 </div>
                 <p className="text-gray-600">Lifetime access</p>
               </div>

@@ -32,6 +32,13 @@ export async function getCourseBySlug(slug: string) {
       where: { slug },
       include: {
         category: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
         sections: {
           orderBy: { order: "asc" },
           select: {
