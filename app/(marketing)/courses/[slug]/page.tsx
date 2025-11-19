@@ -34,12 +34,12 @@ export default async function CourseDetailPage({
   }
 
   // Check if user is enrolled
-  const { enrolled } = session ? await checkEnrollment(course.id) : { enrolled: false }
+  const { enrolled } = session?.user?.id ? await checkEnrollment(course.id) : { enrolled: false }
 
   // Check if user can write a review
   let canWriteReview = false;
   let hasReviewed = false;
-  if (session) {
+  if (session?.user?.id) {
     const hasCompleted = await hasUserCompletedCourse(session.user.id, course.id);
     hasReviewed = await hasUserReviewedCourse(session.user.id, course.id);
     canWriteReview = hasCompleted && !hasReviewed;
@@ -57,7 +57,7 @@ export default async function CourseDetailPage({
       },
       OR: [
         { categoryId: course.categoryId },
-        { creatorId: course.creatorId },
+        ...(course.creatorId ? [{ creatorId: course.creatorId }] : []),
       ],
     },
     include: {
