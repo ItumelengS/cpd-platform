@@ -2,6 +2,10 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import Image from "next/image"
 import SearchBar from "@/components/SearchBar"
+import { ROUTE_CONFIG } from "@/lib/cache"
+
+// Enable ISR with 1 hour revalidation for homepage
+export const revalidate = ROUTE_CONFIG.COURSES.revalidate;
 
 export default async function HomePage() {
   // Fetch trending courses (most viewed this week)

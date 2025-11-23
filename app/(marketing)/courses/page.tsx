@@ -2,6 +2,10 @@ import { getAllCourses } from "@/lib/actions/courses"
 import CourseCard from "@/components/CourseCard"
 import AdUnit from "@/components/AdUnit"
 import Link from "next/link"
+import { ROUTE_CONFIG } from "@/lib/cache"
+
+// Enable ISR with 1 hour revalidation
+export const revalidate = ROUTE_CONFIG.COURSES.revalidate;
 
 export default async function CoursesPage() {
   const { courses, error } = await getAllCourses()

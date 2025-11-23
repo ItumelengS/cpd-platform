@@ -69,6 +69,16 @@ model User {
   // Email preferences
   emailPreferences Json? @default("{\"newFollowers\":true,\"courseApproved\":true,\"courseRejected\":true,\"earnings\":true,\"payouts\":true,\"reviews\":true,\"weeklySummary\":true}")
 
+  // Authentication & verification
+  emailVerified           DateTime?
+  verificationToken       String?  @unique
+  verificationTokenExpiry DateTime?
+  resetToken              String?  @unique
+  resetTokenExpiry        DateTime?
+
+  // Stripe customer
+  stripeCustomerId String? @unique
+
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -89,6 +99,7 @@ model User {
   payouts          Payout[]
   reviews          Review[]
   reviewResponses  ReviewResponse[]
+  subscriptions    Subscription[]
 }
 
 model Category {
@@ -131,6 +142,12 @@ model Course {
 
   price         Float         @default(0)
 
+  // Monthly rotation system
+  isFeatured    Boolean       @default(false) // Featured in current month
+  activeFrom    DateTime?     // When course becomes available
+  activeTo      DateTime?     // When course expires/rotates out
+  rotationMonth Int?          // 1-12 for monthly rotation
+
   // Analytics
   totalViews    Int           @default(0)
 
@@ -149,6 +166,8 @@ model Course {
   reviews       Review[]
 
   @@index([creatorId])
+  @@index([isFeatured, activeFrom, activeTo])
+  @@index([rotationMonth])
 }
 
 model Section {
@@ -607,4 +626,116 @@ model AccountDeletionRequest {
 
   @@index([status])
   @@index([scheduledFor])
+}
+
+// Subscription Plans
+enum SubscriptionTier {
+  BASIC       // Access to basic courses
+  PROFESSIONAL // Access to all courses + extras
+  PREMIUM     // All courses + 1-on-1 support
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAUSED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+model SubscriptionPlan {
+  id                String              @id @default(cuid())
+  name              String              @unique
+  tier              SubscriptionTier
+  description       String              @db.Text
+  features          Json                // Array of features included
+
+  // Pricing
+  monthlyPrice      Float               // Monthly price in ZAR
+  yearlyPrice       Float               // Annual price in ZAR (discounted)
+
+  // CPD Points
+  cpdPointsPerYear  Float               // How many CPD points this covers
+
+  // Course Access
+  courseAccessLevel String              @default("all") // "all", "featured", "basic"
+
+  active            Boolean             @default(true)
+  displayOrder      Int                 @default(0)
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relations
+  subscriptions     Subscription[]
+}
+
+model Subscription {
+  id                String              @id @default(cuid())
+
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planId            String
+  plan              SubscriptionPlan    @relation(fields: [planId], references: [id])
+
+  // Billing
+  status            SubscriptionStatus  @default(ACTIVE)
+  billingInterval   BillingInterval
+  amount            Float               // Amount paid
+  currency          String              @default("zar")
+
+  // Stripe
+  stripeSubscriptionId String?          @unique
+  stripeCustomerId     String?
+
+  // Dates
+  startDate         DateTime            @default(now())
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd  DateTime
+  cancelAt          DateTime?
+  canceledAt        DateTime?
+  endedAt           DateTime?
+
+  // Auto-renewal
+  autoRenew         Boolean             @default(true)
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([userId, status])
+  @@index([status, currentPeriodEnd])
+  @@index([stripeSubscriptionId])
+}
+
+// Monthly Course Bundles - Curated collections that rotate monthly
+model MonthlyBundle {
+  id              String      @id @default(cuid())
+  name            String      // e.g., "January 2025 - Advanced Imaging"
+  description     String      @db.Text
+  month           Int         // 1-12
+  year            Int
+
+  // Bundle details
+  totalCpdHours   Float
+  courseIds       Json        // Array of course IDs in this bundle
+  thumbnail       String?
+
+  // Availability
+  activeFrom      DateTime
+  activeTo        DateTime
+  isCurrent       Boolean     @default(false)
+
+  // Pricing for one-time purchase of bundle
+  price           Float       @default(0)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([year, month])
+  @@index([isCurrent, activeFrom, activeTo])
 }

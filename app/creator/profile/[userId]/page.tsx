@@ -27,6 +27,7 @@ export default async function CreatorProfilePage({ params }: CreatorProfilePageP
           thumbnail: true,
           cpdHours: true,
           difficulty: true,
+          totalViews: true,
           createdAt: true,
         },
       },
@@ -51,7 +52,10 @@ export default async function CreatorProfilePage({ params }: CreatorProfilePageP
     notFound();
   }
 
-  const totalViews = creator.createdCourses.length * 100; // Placeholder
+  // Calculate real total views from courses and publications
+  const coursesViews = creator.createdCourses.reduce((sum, course) => sum + course.totalViews, 0);
+  const publicationsViews = creator.publications.reduce((sum, pub) => sum + pub.totalViews, 0);
+  const totalViews = coursesViews + publicationsViews;
   const totalCourses = creator.createdCourses.length;
   const totalFollowers = creator.followers.length;
 

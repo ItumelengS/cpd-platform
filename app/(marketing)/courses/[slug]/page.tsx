@@ -10,6 +10,11 @@ import Image from "next/image"
 import ReviewList from "@/components/ReviewList"
 import StarRating from "@/components/StarRating"
 import { getRatingDistribution, hasUserCompletedCourse, hasUserReviewedCourse } from "@/lib/reviews"
+import EnrollmentCard from "@/components/EnrollmentCard"
+import { ROUTE_CONFIG } from "@/lib/cache"
+
+// Enable ISR with 30 minute revalidation for course pages
+export const revalidate = ROUTE_CONFIG.COURSE_DETAIL.revalidate;
 
 export default async function CourseDetailPage({
   params,
@@ -286,43 +291,15 @@ export default async function CourseDetailPage({
           {/* Right Column - Enrollment Card */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
-              <div className="bg-white rounded-lg p-6 shadow-lg sticky top-6">
-              <div className="text-center mb-6">
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  {course.price === 0 ? "Free" : `R${course.price}`}
-                </div>
-                <p className="text-gray-600">Lifetime access</p>
-              </div>
-
-              {enrolled ? (
-                <Link
-                  href={`/learn/${course.slug}/${course.sections[0]?.id || ""}`}
-                  className="block w-full bg-green-600 text-white text-center py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition mb-4"
-                >
-                  Continue Learning →
-                </Link>
-              ) : (
-                <EnrollButton courseId={course.id} isLoggedIn={!!session} />
-              )}
-
-              <div className="space-y-3 mt-6 pt-6 border-t border-gray-200">
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span>✓</span>
-                  <span>{course.cpdHours} CPD credit hours</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span>✓</span>
-                  <span>Certificate of completion</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span>✓</span>
-                  <span>Lifetime access</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-700">
-                  <span>✓</span>
-                  <span>Mobile & desktop access</span>
-                </div>
-              </div>
+              <EnrollmentCard
+                courseId={course.id}
+                courseSlug={course.slug}
+                coursePrice={course.price}
+                cpdHours={course.cpdHours}
+                firstSectionId={course.sections[0]?.id}
+                enrolled={enrolled}
+                isLoggedIn={!!session}
+              />
 
               {/* Sidebar Ad */}
               <AdUnit

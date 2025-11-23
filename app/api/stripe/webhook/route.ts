@@ -45,11 +45,27 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log('Received webhook event:', event.type);
-
   try {
     // Handle different event types
     switch (event.type) {
+      // Subscription events
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+
+      case 'customer.subscription.created':
+        await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+
+      // Payout events
       case 'payout.paid':
         await handlePayoutPaid(event.data.object as Stripe.Payout);
         break;
@@ -58,12 +74,14 @@ export async function POST(request: NextRequest) {
         await handlePayoutFailed(event.data.object as Stripe.Payout);
         break;
 
+      // Account events
       case 'account.updated':
         await handleAccountUpdated(event.data.object as Stripe.Account);
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        // Unhandled event type
+        break;
     }
 
     return NextResponse.json({ received: true });
@@ -77,11 +95,207 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * Handle checkout.session.completed event
+ */
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  if (session.mode === 'subscription' && session.subscription) {
+    const userId = session.metadata?.userId;
+    const planId = session.metadata?.planId;
+    const billingPeriod = session.metadata?.billingPeriod as 'MONTHLY' | 'YEARLY';
+    const tier = session.metadata?.tier;
+
+    if (!userId || !planId) {
+      console.error('Missing metadata in checkout session');
+      return;
+    }
+
+    // The subscription will be created by the customer.subscription.created event
+  } else if (session.mode === 'payment' && session.metadata?.type === 'course_purchase') {
+    // Handle course purchase
+    const userId = session.metadata?.userId;
+    const courseId = session.metadata?.courseId;
+
+    if (!userId || !courseId) {
+      console.error('Missing metadata in course purchase checkout session');
+      return;
+    }
+
+    // Check if already enrolled
+    const existingEnrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId,
+        },
+      },
+    });
+
+    if (existingEnrollment) {
+      return;
+    }
+
+    // Get course details
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { creatorId: true, price: true },
+    });
+
+    if (!course) {
+      console.error('Course not found:', courseId);
+      return;
+    }
+
+    // Create enrollment
+    await prisma.enrollment.create({
+      data: {
+        userId,
+        courseId,
+        enrolledAt: new Date(),
+      },
+    });
+
+    // Create creator earning if course has a creator
+    if (course.creatorId && course.price > 0) {
+      const platformFee = course.price * 0.3; // 30% platform fee
+      const netEarnings = course.price * 0.7; // 70% to creator
+
+      await prisma.creatorEarning.create({
+        data: {
+          creatorId: course.creatorId,
+          courseId,
+          userId,
+          amount: course.price,
+          platformFee,
+          netEarnings,
+          paid: false,
+        },
+      });
+    }
+  }
+}
+
+/**
+ * Handle customer.subscription.created event
+ */
+async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+  const userId = subscription.metadata?.userId;
+  const planId = subscription.metadata?.planId;
+  const tier = subscription.metadata?.tier;
+
+  if (!userId || !planId) {
+    console.error('Missing metadata in subscription');
+    return;
+  }
+
+  // Get subscription plan details
+  const plan = await prisma.subscriptionPlan.findUnique({
+    where: { id: planId },
+  });
+
+  if (!plan) {
+    console.error('Subscription plan not found:', planId);
+    return;
+  }
+
+  // Determine billing period from subscription interval
+  const interval = subscription.items.data[0]?.price?.recurring?.interval;
+  const billingPeriod = interval === 'year' ? 'YEARLY' : 'MONTHLY';
+
+  // Create subscription in database
+  await prisma.subscription.create({
+    data: {
+      userId,
+      planId,
+      tier: tier as 'BASIC' | 'PROFESSIONAL' | 'PREMIUM',
+      status: 'ACTIVE',
+      billingPeriod,
+      currentPeriodStart: new Date(subscription.current_period_start * 1000),
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: subscription.customer as string,
+    },
+  });
+}
+
+/**
+ * Handle customer.subscription.updated event
+ */
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  const stripeSubscriptionId = subscription.id;
+
+  // Find existing subscription
+  const existingSubscription = await prisma.subscription.findUnique({
+    where: { stripeSubscriptionId },
+  });
+
+  if (!existingSubscription) {
+    console.error('Subscription not found for update:', stripeSubscriptionId);
+    return;
+  }
+
+  // Map Stripe status to our status
+  let status: 'ACTIVE' | 'CANCELLED' | 'PAST_DUE' | 'TRIALING';
+  switch (subscription.status) {
+    case 'active':
+      status = 'ACTIVE';
+      break;
+    case 'canceled':
+      status = 'CANCELLED';
+      break;
+    case 'past_due':
+      status = 'PAST_DUE';
+      break;
+    case 'trialing':
+      status = 'TRIALING';
+      break;
+    default:
+      status = 'ACTIVE';
+  }
+
+  // Update subscription in database
+  await prisma.subscription.update({
+    where: { stripeSubscriptionId },
+    data: {
+      status,
+      currentPeriodStart: new Date(subscription.current_period_start * 1000),
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+    },
+  });
+}
+
+/**
+ * Handle customer.subscription.deleted event
+ */
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const stripeSubscriptionId = subscription.id;
+
+  // Find existing subscription
+  const existingSubscription = await prisma.subscription.findUnique({
+    where: { stripeSubscriptionId },
+  });
+
+  if (!existingSubscription) {
+    console.error('Subscription not found for deletion:', stripeSubscriptionId);
+    return;
+  }
+
+  // Update subscription status to cancelled
+  await prisma.subscription.update({
+    where: { stripeSubscriptionId },
+    data: {
+      status: 'CANCELLED',
+      canceledAt: new Date(),
+    },
+  });
+}
+
+/**
  * Handle transfer.created event
  */
 async function handleTransferCreated(transfer: Stripe.Transfer) {
-  console.log('Transfer created:', transfer.id);
-
   // Find payout by Stripe transfer ID
   const payout = await prisma.payout.findUnique({
     where: { stripeTransferId: transfer.id },
@@ -101,8 +315,6 @@ async function handleTransferCreated(transfer: Stripe.Transfer) {
  * Handle transfer.paid event
  */
 async function handleTransferPaid(transfer: Stripe.Transfer) {
-  console.log('Transfer paid:', transfer.id);
-
   // Find payout by Stripe transfer ID
   const payout = await prisma.payout.findUnique({
     where: { stripeTransferId: transfer.id },
@@ -123,8 +335,6 @@ async function handleTransferPaid(transfer: Stripe.Transfer) {
  * Handle transfer.failed event
  */
 async function handleTransferFailed(transfer: Stripe.Transfer) {
-  console.log('Transfer failed:', transfer.id);
-
   // Find payout by Stripe transfer ID
   const payout = await prisma.payout.findUnique({
     where: { stripeTransferId: transfer.id },
@@ -160,8 +370,6 @@ async function handleTransferFailed(transfer: Stripe.Transfer) {
  * Handle transfer.reversed event
  */
 async function handleTransferReversed(transfer: Stripe.Transfer) {
-  console.log('Transfer reversed:', transfer.id);
-
   // Find payout by Stripe transfer ID
   const payout = await prisma.payout.findUnique({
     where: { stripeTransferId: transfer.id },
@@ -197,8 +405,6 @@ async function handleTransferReversed(transfer: Stripe.Transfer) {
  * Handle payout.paid event (for destination account payouts)
  */
 async function handlePayoutPaid(stripePayout: Stripe.Payout) {
-  console.log('Payout paid:', stripePayout.id);
-
   // Find payout by Stripe payout ID
   const payout = await prisma.payout.findUnique({
     where: { stripePayoutId: stripePayout.id },
@@ -219,8 +425,6 @@ async function handlePayoutPaid(stripePayout: Stripe.Payout) {
  * Handle payout.failed event (for destination account payouts)
  */
 async function handlePayoutFailed(stripePayout: Stripe.Payout) {
-  console.log('Payout failed:', stripePayout.id);
-
   // Find payout by Stripe payout ID
   const payout = await prisma.payout.findUnique({
     where: { stripePayoutId: stripePayout.id },
@@ -256,8 +460,6 @@ async function handlePayoutFailed(stripePayout: Stripe.Payout) {
  * Handle account.updated event
  */
 async function handleAccountUpdated(account: Stripe.Account) {
-  console.log('Account updated:', account.id);
-
   // Find user by Stripe account ID
   const user = await prisma.user.findUnique({
     where: { stripeAccountId: account.id },

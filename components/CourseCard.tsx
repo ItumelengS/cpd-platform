@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link"
+import Image from "next/image"
 import { Course, Category } from "@prisma/client"
 
 type CourseWithCategory = Course & {
@@ -18,8 +19,18 @@ export default function CourseCard({ course }: { course: CourseWithCategory }) {
       className="block bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-500 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
     >
       {/* Thumbnail */}
-      <div className="h-48 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-        <div className="text-6xl">{course.category.icon || "📚"}</div>
+      <div className="h-48 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center relative overflow-hidden">
+        {course.thumbnail ? (
+          <Image
+            src={course.thumbnail}
+            alt={course.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="text-6xl">{course.category.icon || "📚"}</div>
+        )}
       </div>
 
       {/* Content */}

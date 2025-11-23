@@ -1,6 +1,8 @@
 import { auth, signOut } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { prisma } from "@/lib/prisma"
+import UnverifiedEmailBanner from "@/components/UnverifiedEmailBanner"
 
 export default async function DashboardLayout({
   children,
@@ -12,6 +14,12 @@ export default async function DashboardLayout({
   if (!session) {
     redirect("/login")
   }
+
+  // Fetch user to check email verification status
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { emailVerified: true, email: true },
+  })
 
   const userInitials = session.user?.name
     ?.split(" ")
@@ -74,6 +82,13 @@ export default async function DashboardLayout({
                 <span className="font-medium">My Courses</span>
               </Link>
               <Link
+                href="/dashboard/cpd-tracker"
+                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition"
+              >
+                <span>📊</span>
+                <span className="font-medium">CPD Tracker</span>
+              </Link>
+              <Link
                 href="/dashboard/certificates"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition"
               >
@@ -98,7 +113,13 @@ export default async function DashboardLayout({
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            {/* Show unverified email banner */}
+            {user && !user.emailVerified && (
+              <UnverifiedEmailBanner email={user.email} />
+            )}
+            {children}
+          </main>
         </div>
       </div>
     </div>
