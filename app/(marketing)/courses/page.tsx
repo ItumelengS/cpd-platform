@@ -1,7 +1,6 @@
 import { getAllCourses } from "@/lib/actions/courses"
-import CourseCard from "@/components/CourseCard"
-import AdUnit from "@/components/AdUnit"
 import Link from "next/link"
+import CoursesClient from "./CoursesClient"
 // Enable ISR with 1 hour revalidation
 export const revalidate = 3600;
 
@@ -20,9 +19,6 @@ export default async function CoursesPage() {
       </div>
     )
   }
-
-  // Group courses by category
-  const categories = Array.from(new Set(courses.map((c) => c.category.name)))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -60,46 +56,9 @@ export default async function CoursesPage() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Course Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-wrap gap-3 mb-8">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">
-            All Courses
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category}
-              className="px-4 py-2 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-100 border border-gray-300"
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {/* Course Grid */}
-        {courses.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No courses available yet</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course, index) => (
-              <>
-                <CourseCard key={course.id} course={course} />
-                {/* Add ad unit after every 6 courses */}
-                {(index + 1) % 6 === 0 && index !== courses.length - 1 && (
-                  <div className="md:col-span-2 lg:col-span-3" key={`ad-${index}`}>
-                    <AdUnit
-                      slot="1234567890"
-                      format="horizontal"
-                      className="my-4"
-                    />
-                  </div>
-                )}
-              </>
-            ))}
-          </div>
-        )}
+        <CoursesClient courses={courses} />
       </div>
 
       {/* CTA Section */}
