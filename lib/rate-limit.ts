@@ -86,7 +86,7 @@ export function rateLimit(config: RateLimitConfig) {
     const reset = Math.ceil(store[key].resetTime / 1000);
 
     // Prepare headers
-    const headers = {
+    const headers: Record<string, string> = {
       'X-RateLimit-Limit': limit.toString(),
       'X-RateLimit-Remaining': remaining.toString(),
       'X-RateLimit-Reset': reset.toString(),

@@ -62,7 +62,7 @@ export default async function CPDTrackerPage() {
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId: session.user.id,
-      status: { in: ['ACTIVE', 'PAST_DUE', 'TRIALING'] },
+      status: 'ACTIVE',
     },
     include: {
       plan: true,
@@ -70,7 +70,7 @@ export default async function CPDTrackerPage() {
   })
 
   // Determine annual target based on subscription or professional standards
-  const annualTarget = subscription?.plan?.annualCPDPoints || 20 // Default 20 hours
+  const annualTarget = subscription?.plan?.cpdPointsPerYear || 20 // Default 20 hours
 
   // Get courses in progress (not yet completed)
   const enrollments = await prisma.enrollment.findMany({
@@ -93,7 +93,6 @@ export default async function CPDTrackerPage() {
           },
         },
       },
-      progress: true,
     },
     take: 5,
     orderBy: {
@@ -103,9 +102,8 @@ export default async function CPDTrackerPage() {
 
   // Calculate overall progress percentage for in-progress courses
   const coursesInProgress = enrollments.map((enrollment) => {
-    const totalSections = enrollment.progress.length
-    const completedSections = enrollment.progress.filter((p) => p.completed).length
-    const progressPercentage = totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0
+    // TODO: Query progress separately to calculate actual progress percentage
+    const progressPercentage = 0
 
     return {
       ...enrollment.course,
@@ -115,9 +113,10 @@ export default async function CPDTrackerPage() {
   })
 
   // Get recommended courses to complete CPD hours
-  const recommendedCourses = await prisma.course.findMany({
+  const recommendedCoursesRaw = await prisma.course.findMany({
     where: {
       published: true,
+      creatorId: { not: null },
       enrollments: {
         none: {
           userId: session.user.id,
@@ -142,6 +141,21 @@ export default async function CPDTrackerPage() {
       totalViews: 'desc',
     },
   })
+
+  // Map to ensure type compatibility
+  const recommendedCourses = recommendedCoursesRaw
+    .filter((course) => course.creator?.name)
+    .map((course) => ({
+      id: course.id,
+      title: course.title,
+      slug: course.slug,
+      cpdHours: course.cpdHours,
+      price: course.price,
+      category: course.category,
+      creator: {
+        name: course.creator!.name!,
+      },
+    }))
 
   return (
     <CPDTrackerDashboard

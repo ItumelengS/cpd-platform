@@ -15,7 +15,7 @@ export default async function SubscriptionPage() {
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId: session.user.id,
-      status: { in: ['ACTIVE', 'PAST_DUE', 'TRIALING'] },
+      status: 'ACTIVE',
     },
     include: {
       plan: true,
@@ -40,6 +40,23 @@ export default async function SubscriptionPage() {
     take: 5,
   });
 
+  // Map subscription to component props format
+  const mappedSubscription = subscription ? {
+    id: subscription.id,
+    tier: subscription.plan.tier,
+    status: subscription.status,
+    billingPeriod: subscription.billingInterval,
+    currentPeriodStart: subscription.currentPeriodStart,
+    currentPeriodEnd: subscription.currentPeriodEnd,
+    cancelAtPeriodEnd: !subscription.autoRenew,
+    plan: {
+      name: subscription.plan.name,
+      monthlyPrice: subscription.plan.monthlyPrice,
+      yearlyPrice: subscription.plan.yearlyPrice,
+      cpdPointsPerYear: subscription.plan.cpdPointsPerYear,
+    },
+  } : null;
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,8 +73,8 @@ export default async function SubscriptionPage() {
           </p>
         </div>
 
-        {subscription ? (
-          <SubscriptionManager subscription={subscription} />
+        {mappedSubscription ? (
+          <SubscriptionManager subscription={mappedSubscription} />
         ) : (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <div className="max-w-md mx-auto">
@@ -92,7 +109,7 @@ export default async function SubscriptionPage() {
                   <div>
                     <p className="font-medium text-gray-900">{sub.plan.name}</p>
                     <p className="text-sm text-gray-600">
-                      {sub.billingPeriod === 'YEARLY' ? 'Annual' : 'Monthly'} Billing
+                      {sub.billingInterval === 'YEARLY' ? 'Annual' : 'Monthly'} Billing
                     </p>
                   </div>
                   <div className="text-right">

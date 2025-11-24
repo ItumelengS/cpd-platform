@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     await prisma.subscription.update({
       where: { id: subscriptionId },
       data: {
-        cancelAtPeriodEnd: true,
+        autoRenew: false,
       },
     });
 

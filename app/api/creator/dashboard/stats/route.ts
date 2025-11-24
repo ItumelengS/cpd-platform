@@ -3,7 +3,6 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic' // Use headers/cookies
-export const revalidate = 300 // Cache for 5 minutes
 
 export async function GET() {
   try {

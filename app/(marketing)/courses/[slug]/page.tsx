@@ -11,10 +11,8 @@ import ReviewList from "@/components/ReviewList"
 import StarRating from "@/components/StarRating"
 import { getRatingDistribution, hasUserCompletedCourse, hasUserReviewedCourse } from "@/lib/reviews"
 import EnrollmentCard from "@/components/EnrollmentCard"
-import { ROUTE_CONFIG } from "@/lib/cache"
-
 // Enable ISR with 30 minute revalidation for course pages
-export const revalidate = ROUTE_CONFIG.COURSE_DETAIL.revalidate;
+export const revalidate = 1800;
 
 export default async function CourseDetailPage({
   params,
@@ -310,7 +308,6 @@ export default async function CourseDetailPage({
             </div>
           </div>
         </div>
-      </div>
       </div>
 
       {/* Related Content - Students Also Viewed */}

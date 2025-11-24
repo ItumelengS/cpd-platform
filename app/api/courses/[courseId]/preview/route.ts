@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { courseId } = await params;
 
-    // Get the course with its first section and lessons
+    // Get the course with its first section for preview
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -26,34 +26,10 @@ export async function GET(
           },
         },
         sections: {
-          where: {
-            isPreview: true, // Only get sections marked as preview
-          },
-          include: {
-            lessons: {
-              where: {
-                isPreview: true, // Only get lessons marked as preview
-              },
-              orderBy: {
-                order: 'asc',
-              },
-              select: {
-                id: true,
-                title: true,
-                description: true,
-                type: true,
-                content: true,
-                videoUrl: true,
-                duration: true,
-                order: true,
-                isPreview: true,
-              },
-            },
-          },
           orderBy: {
             order: 'asc',
           },
-          take: 1, // Only get the first preview section
+          take: 1, // Only get the first section as preview
         },
       },
     });
@@ -65,40 +41,7 @@ export async function GET(
       );
     }
 
-    // If no preview sections, get the first section and first lesson
-    if (course.sections.length === 0) {
-      const firstSection = await prisma.section.findFirst({
-        where: {
-          courseId: courseId,
-        },
-        include: {
-          lessons: {
-            orderBy: {
-              order: 'asc',
-            },
-            take: 1,
-            select: {
-              id: true,
-              title: true,
-              description: true,
-              type: true,
-              content: true,
-              videoUrl: true,
-              duration: true,
-              order: true,
-              isPreview: true,
-            },
-          },
-        },
-        orderBy: {
-          order: 'asc',
-        },
-      });
-
-      if (firstSection && firstSection.lessons.length > 0) {
-        course.sections = [firstSection];
-      }
-    }
+    const previewSection = course.sections[0] || null;
 
     // Return preview content
     return NextResponse.json({
@@ -112,8 +55,8 @@ export async function GET(
         difficulty: course.difficulty,
         price: course.price,
       },
-      previewSection: course.sections[0] || null,
-      hasPreview: course.sections.length > 0 && course.sections[0].lessons.length > 0,
+      previewSection: previewSection,
+      hasPreview: !!previewSection,
     });
   } catch (error) {
     return NextResponse.json(

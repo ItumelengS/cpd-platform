@@ -154,23 +154,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       },
     });
 
-    // Create creator earning if course has a creator
-    if (course.creatorId && course.price > 0) {
-      const platformFee = course.price * 0.3; // 30% platform fee
-      const netEarnings = course.price * 0.7; // 70% to creator
-
-      await prisma.creatorEarning.create({
-        data: {
-          creatorId: course.creatorId,
-          courseId,
-          userId,
-          amount: course.price,
-          platformFee,
-          netEarnings,
-          paid: false,
-        },
-      });
-    }
+    // TODO: Track creator earnings for course purchases
+    // Creator earnings are currently tracked via the Revenue model
+    // Individual course purchase tracking can be implemented later
   }
 }
 
@@ -197,21 +183,26 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Determine billing period from subscription interval
+  // Determine billing interval from subscription
   const interval = subscription.items.data[0]?.price?.recurring?.interval;
-  const billingPeriod = interval === 'year' ? 'YEARLY' : 'MONTHLY';
+  const billingInterval = interval === 'year' ? 'YEARLY' : 'MONTHLY';
+
+  // Get amount from subscription
+  const amount = subscription.items.data[0]?.price?.unit_amount
+    ? subscription.items.data[0].price.unit_amount / 100
+    : 0;
 
   // Create subscription in database
   await prisma.subscription.create({
     data: {
       userId,
       planId,
-      tier: tier as 'BASIC' | 'PROFESSIONAL' | 'PREMIUM',
       status: 'ACTIVE',
-      billingPeriod,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      billingInterval,
+      amount,
+      currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+      currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+      cancelAt: (subscription as any).cancel_at ? new Date((subscription as any).cancel_at * 1000) : null,
       stripeSubscriptionId: subscription.id,
       stripeCustomerId: subscription.customer as string,
     },
@@ -235,19 +226,21 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   // Map Stripe status to our status
-  let status: 'ACTIVE' | 'CANCELLED' | 'PAST_DUE' | 'TRIALING';
+  let status: 'ACTIVE' | 'CANCELLED' | 'EXPIRED' | 'PAUSED';
   switch (subscription.status) {
     case 'active':
+    case 'trialing':
       status = 'ACTIVE';
       break;
     case 'canceled':
       status = 'CANCELLED';
       break;
     case 'past_due':
-      status = 'PAST_DUE';
+      status = 'PAUSED'; // Map past_due to PAUSED
       break;
-    case 'trialing':
-      status = 'TRIALING';
+    case 'unpaid':
+    case 'incomplete_expired':
+      status = 'EXPIRED';
       break;
     default:
       status = 'ACTIVE';
@@ -258,10 +251,10 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     where: { stripeSubscriptionId },
     data: {
       status,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-      canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+      currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+      currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+      cancelAt: (subscription as any).cancel_at ? new Date((subscription as any).cancel_at * 1000) : null,
+      canceledAt: (subscription as any).canceled_at ? new Date((subscription as any).canceled_at * 1000) : null,
     },
   });
 }

@@ -3,23 +3,14 @@
 import { useEffect, useState } from "react"
 import LoadingSpinner from "./LoadingSpinner"
 
-interface PreviewLesson {
-  id: string
-  title: string
-  description: string | null
-  type: string
-  content: string | null
-  videoUrl: string | null
-  duration: number | null
-  order: number
-  isPreview: boolean
-}
-
 interface PreviewSection {
   id: string
   title: string
-  description: string | null
-  lessons: PreviewLesson[]
+  content: string
+  contentType: string
+  videoUrl: string | null
+  pdfUrl: string | null
+  duration: number | null
 }
 
 interface CoursePreview {
@@ -58,7 +49,6 @@ export default function CoursePreviewModal({
   const [preview, setPreview] = useState<CoursePreview | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
 
   useEffect(() => {
     if (isOpen && courseId) {
@@ -92,7 +82,7 @@ export default function CoursePreviewModal({
 
   if (!isOpen) return null
 
-  const currentLesson = preview?.previewSection?.lessons[currentLessonIndex]
+  const previewSection = preview?.previewSection
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -126,7 +116,7 @@ export default function CoursePreviewModal({
               <div className="text-4xl mb-4">⚠️</div>
               <p className="text-gray-600">{error}</p>
             </div>
-          ) : preview && preview.hasPreview && currentLesson ? (
+          ) : preview && preview.hasPreview && previewSection ? (
             <div className="space-y-6">
               {/* Section Info */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -137,49 +127,19 @@ export default function CoursePreviewModal({
                   <span className="font-medium">Free Preview</span>
                 </div>
                 <p className="text-sm text-blue-600">
-                  {preview.previewSection?.title || "Introduction"}
+                  {previewSection.title}
                 </p>
               </div>
 
-              {/* Lesson Navigation */}
-              {preview.previewSection && preview.previewSection.lessons.length > 1 && (
-                <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
-                  <button
-                    onClick={() => setCurrentLessonIndex((i) => Math.max(0, i - 1))}
-                    disabled={currentLessonIndex === 0}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
-                  >
-                    ← Previous
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    Lesson {currentLessonIndex + 1} of {preview.previewSection.lessons.length}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setCurrentLessonIndex((i) =>
-                        Math.min(preview.previewSection!.lessons.length - 1, i + 1)
-                      )
-                    }
-                    disabled={currentLessonIndex === preview.previewSection.lessons.length - 1}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
-                  >
-                    Next →
-                  </button>
-                </div>
-              )}
-
-              {/* Lesson Content */}
+              {/* Section Content */}
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{currentLesson.title}</h3>
-                {currentLesson.description && (
-                  <p className="text-gray-600 mb-4">{currentLesson.description}</p>
-                )}
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{previewSection.title}</h3>
 
                 {/* Video Content */}
-                {currentLesson.type === "VIDEO" && currentLesson.videoUrl && (
+                {previewSection.contentType === "video" && previewSection.videoUrl && (
                   <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
                     <video
-                      src={currentLesson.videoUrl}
+                      src={previewSection.videoUrl}
                       controls
                       className="w-full h-full"
                     >
@@ -189,20 +149,31 @@ export default function CoursePreviewModal({
                 )}
 
                 {/* Text Content */}
-                {currentLesson.type === "TEXT" && currentLesson.content && (
+                {previewSection.contentType === "text" && previewSection.content && (
                   <div
                     className="prose max-w-none bg-gray-50 rounded-lg p-6"
-                    dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                    dangerouslySetInnerHTML={{ __html: previewSection.content }}
                   />
                 )}
 
+                {/* PDF Content */}
+                {previewSection.contentType === "pdf" && previewSection.pdfUrl && (
+                  <div className="bg-gray-100 rounded-lg p-6 text-center">
+                    <svg className="w-16 h-16 mx-auto text-red-500 mb-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-gray-700 mb-4">PDF Content Available</p>
+                    <p className="text-sm text-gray-600">Enroll to access the full PDF material</p>
+                  </div>
+                )}
+
                 {/* Duration */}
-                {currentLesson.duration && (
+                {previewSection.duration && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>{Math.round(currentLesson.duration / 60)} minutes</span>
+                    <span>{Math.round(previewSection.duration / 60)} minutes</span>
                   </div>
                 )}
               </div>

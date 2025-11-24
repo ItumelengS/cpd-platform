@@ -170,11 +170,6 @@ export function getCachedCourseBySlug(slug: string) {
           },
           sections: {
             orderBy: { order: 'asc' },
-            include: {
-              lessons: {
-                orderBy: { order: 'asc' },
-              },
-            },
           },
         },
       });
@@ -207,7 +202,6 @@ export function getCachedUserEnrollments(userId: string) {
               },
             },
           },
-          progress: true,
         },
         orderBy: {
           enrolledAt: 'desc',
