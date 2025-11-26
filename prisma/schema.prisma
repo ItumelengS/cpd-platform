@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,27 +7,543 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-  INSTRUCTOR
-  CREATOR
+model AccountDeletionRequest {
+  id           String    @id
+  userId       String    @unique
+  reason       String?
+  status       String    @default("pending")
+  scheduledFor DateTime?
+  createdAt    DateTime  @default(now())
+  processedAt  DateTime?
+
+  @@index([scheduledFor])
+  @@index([status])
+}
+
+model Category {
+  id          String        @id
+  name        String        @unique
+  slug        String        @unique
+  description String?
+  icon        String?
+  order       Int           @default(0)
+  Course      Course[]
+  Publication Publication[]
+}
+
+model Certificate {
+  id            String         @id
+  userId        String
+  courseId      String
+  certificateId String         @unique
+  score         Float
+  issuedAt      DateTime       @default(now())
+  ceuExpiryDate DateTime
+  ceuHours      Float
+  contentType   CPDContentType
+  Course        Course         @relation(fields: [courseId], references: [id])
+  User          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId, ceuExpiryDate])
+}
+
+model Course {
+  id              String         @id
+  title           String
+  slug            String         @unique
+  description     String
+  thumbnail       String?
+  categoryId      String
+  cpdHours        Float
+  difficulty      String
+  sourceArticle   String?
+  published       Boolean        @default(false)
+  price           Float          @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime
+  creatorId       String?
+  isDraft         Boolean        @default(true)
+  publishedAt     DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  submittedAt     DateTime?
+  totalViews      Int            @default(0)
+  averageRating   Float?         @default(0)
+  ratingCount     Int            @default(0)
+  activeFrom      DateTime?
+  activeTo        DateTime?
+  isFeatured      Boolean        @default(false)
+  rotationMonth   Int?
+  cpdContentType  CPDContentType @default(CLINICAL)
+  Certificate     Certificate[]
+  Category        Category       @relation(fields: [categoryId], references: [id])
+  User            User?          @relation(fields: [creatorId], references: [id])
+  Enrollment      Enrollment[]
+  Review          Review[]
+  Section         Section[]
+  View            View[]
+
+  @@index([creatorId])
+  @@index([isFeatured, activeFrom, activeTo])
+  @@index([rotationMonth])
+}
+
+model CreatorApplication {
+  id              String        @id
+  userId          String
+  motivation      String
+  expertise       String
+  experience      String
+  sampleContent   String?
+  cvUrl           String
+  status          CreatorStatus @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  User            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([userId])
+}
+
+model CreatorEarning {
+  id            String    @id
+  revenueId     String
+  creatorId     String
+  views         Int
+  viewShare     Float
+  grossEarnings Float
+  platformFee   Float
+  netEarnings   Float
+  paid          Boolean   @default(false)
+  paidAt        DateTime?
+  payoutId      String?
+  createdAt     DateTime  @default(now())
+  User          User      @relation(fields: [creatorId], references: [id])
+  Payout        Payout?   @relation(fields: [payoutId], references: [id])
+  Revenue       Revenue   @relation(fields: [revenueId], references: [id], onDelete: Cascade)
+
+  @@unique([revenueId, creatorId])
+  @@index([creatorId, paid])
+}
+
+model DMCAReport {
+  id                 String     @id
+  reporterName       String
+  reporterEmail      String
+  reporterAddress    String
+  copyrightOwner     String
+  workDescription    String
+  infringingUrl      String
+  goodFaithStatement Boolean
+  accuracyStatement  Boolean
+  signature          String
+  contentId          String?
+  contentType        String?
+  status             DMCAStatus @default(PENDING)
+  reviewedAt         DateTime?
+  reviewedBy         String?
+  resolution         String?
+  createdAt          DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+model DataExportRequest {
+  id          String    @id
+  userId      String
+  status      String    @default("pending")
+  downloadUrl String?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([status])
+  @@index([userId])
+}
+
+model Enrollment {
+  id          String    @id
+  userId      String
+  courseId    String
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+  Course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model FileUpload {
+  id         String   @id
+  userId     String
+  fileName   String
+  fileUrl    String
+  fileType   String
+  fileSize   Int
+  uploadedAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Follow {
+  id                            String   @id
+  followerId                    String
+  followingId                   String
+  createdAt                     DateTime @default(now())
+  User_Follow_followerIdToUser  User     @relation("Follow_followerIdToUser", fields: [followerId], references: [id], onDelete: Cascade)
+  User_Follow_followingIdToUser User     @relation("Follow_followingIdToUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model MonthlyBundle {
+  id            String   @id
+  name          String
+  description   String
+  month         Int
+  year          Int
+  totalCpdHours Float
+  courseIds     Json
+  thumbnail     String?
+  activeFrom    DateTime
+  activeTo      DateTime
+  isCurrent     Boolean  @default(false)
+  price         Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+
+  @@unique([year, month])
+  @@index([isCurrent, activeFrom, activeTo])
+}
+
+model Notification {
+  id        String   @id
+  userId    String
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  data      Json?
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId, read])
+}
+
+model Payout {
+  id               String           @id
+  creatorId        String
+  amount           Float
+  currency         String           @default("zar")
+  stripePayoutId   String?          @unique
+  stripeTransferId String?          @unique
+  status           PayoutStatus     @default(PENDING)
+  failureReason    String?
+  initiatedAt      DateTime         @default(now())
+  completedAt      DateTime?
+  failedAt         DateTime?
+  CreatorEarning   CreatorEarning[]
+  User             User             @relation(fields: [creatorId], references: [id])
+
+  @@index([creatorId, status])
+  @@index([status, initiatedAt])
+}
+
+model Progress {
+  id          String    @id
+  userId      String
+  sectionId   String
+  completed   Boolean   @default(false)
+  timeSpent   Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  Section     Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sectionId])
+}
+
+model Publication {
+  id              String    @id
+  title           String
+  description     String
+  creatorId       String
+  fileUrl         String
+  thumbnail       String?
+  doi             String?
+  journal         String?
+  publishedDate   DateTime?
+  keywords        String[]
+  categoryId      String
+  published       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+  rejectedAt      DateTime?
+  rejectionReason String?
+  submittedAt     DateTime?
+  totalViews      Int       @default(0)
+  Category        Category  @relation(fields: [categoryId], references: [id])
+  User            User      @relation(fields: [creatorId], references: [id])
+  View            View[]
+
+  @@index([creatorId])
+}
+
+model Question {
+  id            String        @id
+  sectionId     String?
+  courseId      String
+  questionText  String
+  context       String?
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String
+  explanation   String?
+  order         Int
+  Section       Section?      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  QuizAttempt   QuizAttempt[]
+}
+
+model QuizAttempt {
+  id            String   @id
+  userId        String
+  questionId    String
+  answer        String
+  isCorrect     Boolean
+  attemptNumber Int      @default(1)
+  timeSpent     Int?
+  createdAt     DateTime @default(now())
+  Question      Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, questionId])
+}
+
+model Revenue {
+  id             String           @id
+  month          Int
+  year           Int
+  totalRevenue   Float
+  totalViews     Int
+  revenuePerView Float
+  calculated     Boolean          @default(false)
+  calculatedAt   DateTime?
+  createdAt      DateTime         @default(now())
+  CreatorEarning CreatorEarning[]
+
+  @@unique([year, month])
+  @@index([calculated])
+}
+
+model Review {
+  id             String           @id
+  userId         String
+  courseId       String
+  rating         Int
+  title          String?
+  comment        String?
+  reported       Boolean          @default(false)
+  hidden         Boolean          @default(false)
+  helpful        Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  Course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  User           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ReviewResponse ReviewResponse[]
+
+  @@unique([userId, courseId])
+  @@index([courseId, rating])
+  @@index([createdAt])
+}
+
+model ReviewResponse {
+  id        String   @id
+  reviewId  String
+  creatorId String
+  comment   String
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [creatorId], references: [id])
+  Review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+}
+
+model Section {
+  id             String     @id
+  courseId       String
+  title          String
+  content        String
+  order          Int
+  minTimeSeconds Int        @default(300)
+  contentType    String     @default("text")
+  duration       Int?
+  pdfUrl         String?
+  videoUrl       String?
+  Progress       Progress[]
+  Question       Question[]
+  Course         Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String             @id
+  userId               String
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  billingInterval      BillingInterval
+  amount               Float
+  currency             String             @default("zar")
+  stripeSubscriptionId String?            @unique
+  stripeCustomerId     String?
+  startDate            DateTime           @default(now())
+  currentPeriodStart   DateTime           @default(now())
+  currentPeriodEnd     DateTime
+  cancelAt             DateTime?
+  canceledAt           DateTime?
+  endedAt              DateTime?
+  autoRenew            Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime
+  SubscriptionPlan     SubscriptionPlan   @relation(fields: [planId], references: [id])
+  User                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, currentPeriodEnd])
+  @@index([stripeSubscriptionId])
+  @@index([userId, status])
+}
+
+model SubscriptionPlan {
+  id                String           @id
+  name              String           @unique
+  tier              SubscriptionTier
+  description       String
+  features          Json
+  monthlyPrice      Float
+  yearlyPrice       Float
+  cpdPointsPerYear  Float
+  courseAccessLevel String           @default("all")
+  active            Boolean          @default(true)
+  displayOrder      Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime
+  Subscription      Subscription[]
+}
+
+model User {
+  id                              String               @id
+  email                           String               @unique
+  name                            String?
+  password                        String?
+  role                            Role                 @default(USER)
+  specialty                       String?
+  institution                     String?
+  country                         String?
+  createdAt                       DateTime             @default(now())
+  updatedAt                       DateTime
+  avatar                          String?
+  bio                             String?
+  creatorStatus                   CreatorStatus        @default(NONE)
+  cvUrl                           String?
+  isCreator                       Boolean              @default(false)
+  socialLinks                     Json?
+  stripeAccountId                 String?              @unique
+  stripeChargesEnabled            Boolean              @default(false)
+  stripeDetailsSubmitted          Boolean              @default(false)
+  stripeOnboarded                 Boolean              @default(false)
+  stripePayoutsEnabled            Boolean              @default(false)
+  emailPreferences                Json?                @default("{\"payouts\": true, \"reviews\": true, \"earnings\": true, \"newFollowers\": true, \"weeklySummary\": true, \"courseApproved\": true, \"courseRejected\": true}")
+  emailVerified                   DateTime?
+  resetToken                      String?              @unique
+  resetTokenExpiry                DateTime?
+  stripeCustomerId                String?              @unique
+  verificationToken               String?              @unique
+  verificationTokenExpiry         DateTime?
+  cpdExemptUntil                  DateTime?
+  hpcsaNumber                     String?
+  isInCommunityService            Boolean              @default(false)
+  isRegistrar                     Boolean              @default(false)
+  profession                      String?
+  Certificate                     Certificate[]
+  Course                          Course[]
+  CreatorApplication              CreatorApplication[]
+  CreatorEarning                  CreatorEarning[]
+  Enrollment                      Enrollment[]
+  Follow_Follow_followerIdToUser  Follow[]             @relation("Follow_followerIdToUser")
+  Follow_Follow_followingIdToUser Follow[]             @relation("Follow_followingIdToUser")
+  Notification                    Notification[]
+  Payout                          Payout[]
+  Progress                        Progress[]
+  Publication                     Publication[]
+  QuizAttempt                     QuizAttempt[]
+  Review                          Review[]
+  ReviewResponse                  ReviewResponse[]
+  Subscription                    Subscription[]
+  View_View_creatorIdToUser       View[]               @relation("View_creatorIdToUser")
+  View_View_userIdToUser          View[]               @relation("View_userIdToUser")
+}
+
+model UserConsent {
+  id                String    @id
+  userId            String    @unique
+  termsAccepted     Boolean   @default(false)
+  termsAcceptedAt   DateTime?
+  privacyAccepted   Boolean   @default(false)
+  privacyAcceptedAt DateTime?
+  ageVerified       Boolean   @default(false)
+  ageVerifiedAt     DateTime?
+  marketingEmails   Boolean   @default(false)
+  marketingEmailsAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime
+}
+
+model View {
+  id                        String       @id
+  userId                    String?
+  courseId                  String?
+  publicationId             String?
+  creatorId                 String
+  duration                  Int          @default(0)
+  completed                 Boolean      @default(false)
+  ipAddress                 String?
+  userAgent                 String?
+  referrer                  String?
+  createdAt                 DateTime     @default(now())
+  Course                    Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  User_View_creatorIdToUser User         @relation("View_creatorIdToUser", fields: [creatorId], references: [id])
+  Publication               Publication? @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  User_View_userIdToUser    User?        @relation("View_userIdToUser", fields: [userId], references: [id])
+
+  @@index([courseId, createdAt])
+  @@index([creatorId, createdAt])
+  @@index([userId, createdAt])
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum CPDContentType {
+  CLINICAL
+  ETHICS_HUMAN_RIGHTS_LAW
 }
 
 enum CreatorStatus {
-  NONE          // Not a creator
-  PENDING       // Application submitted
-  APPROVED      // Active creator
-  REJECTED      // Application rejected
-  SUSPENDED     // Temporarily suspended
-}
-
-enum PayoutStatus {
+  NONE
   PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  CANCELLED
+  APPROVED
+  REJECTED
+  SUSPENDED
 }
 
 enum DMCAStatus {
@@ -41,598 +554,19 @@ enum DMCAStatus {
   COUNTER_NOTICE_RECEIVED
 }
 
-model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  name         String?
-  password     String?       // Optional for OAuth users
-  role         Role          @default(USER)
-  specialty    String?
-  institution  String?
-  country      String?
-
-  // Creator fields
-  isCreator     Boolean       @default(false)
-  creatorStatus CreatorStatus @default(NONE)
-  bio           String?       @db.Text
-  avatar        String?
-  cvUrl         String?
-  socialLinks   Json?         // {twitter, linkedin, website}
-
-  // Stripe Connect
-  stripeAccountId         String?  @unique
-  stripeOnboarded         Boolean  @default(false)
-  stripeDetailsSubmitted  Boolean  @default(false)
-  stripeChargesEnabled    Boolean  @default(false)
-  stripePayoutsEnabled    Boolean  @default(false)
-
-  // Email preferences
-  emailPreferences Json? @default("{\"newFollowers\":true,\"courseApproved\":true,\"courseRejected\":true,\"earnings\":true,\"payouts\":true,\"reviews\":true,\"weeklySummary\":true}")
-
-  // Authentication & verification
-  emailVerified           DateTime?
-  verificationToken       String?  @unique
-  verificationTokenExpiry DateTime?
-  resetToken              String?  @unique
-  resetTokenExpiry        DateTime?
-
-  // Stripe customer
-  stripeCustomerId String? @unique
-
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  // Relations
-  enrollments      Enrollment[]
-  attempts         QuizAttempt[]
-  certificates     Certificate[]
-  progress         Progress[]
-  createdCourses   Course[]              @relation("CreatedBy")
-  publications     Publication[]
-  followers        Follow[]              @relation("Following")
-  following        Follow[]              @relation("Follower")
-  applications     CreatorApplication[]
-  notifications    Notification[]
-  views            View[]
-  creatorViews     View[]                @relation("CreatorViews")
-  earnings         CreatorEarning[]
-  payouts          Payout[]
-  reviews          Review[]
-  reviewResponses  ReviewResponse[]
-  subscriptions    Subscription[]
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
 }
 
-model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  icon        String?  // For emoji
-  order       Int      @default(0)
-
-  // Relations
-  courses      Course[]
-  publications Publication[]
-}
-
-model Course {
-  id            String        @id @default(cuid())
-  title         String
-  slug          String        @unique
-  description   String
-  thumbnail     String?
-  categoryId    String
-  category      Category      @relation(fields: [categoryId], references: [id])
-
-  // Creator relation
-  creatorId     String?
-  creator       User?         @relation("CreatedBy", fields: [creatorId], references: [id])
-
-  cpdHours      Float         // e.g., 2.0
-  difficulty    String        // Beginner/Intermediate/Advanced
-  sourceArticle String?       // DOI or citation
-  published     Boolean       @default(false)
-
-  // Content approval
-  isDraft       Boolean       @default(true)
-  submittedAt   DateTime?
-  publishedAt   DateTime?
-  rejectedAt    DateTime?
-  rejectionReason String?     @db.Text
-
-  price         Float         @default(0)
-
-  // Monthly rotation system
-  isFeatured    Boolean       @default(false) // Featured in current month
-  activeFrom    DateTime?     // When course becomes available
-  activeTo      DateTime?     // When course expires/rotates out
-  rotationMonth Int?          // 1-12 for monthly rotation
-
-  // Analytics
-  totalViews    Int           @default(0)
-
-  // Reviews
-  averageRating Float?        @default(0)
-  ratingCount   Int           @default(0)
-
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Relations
-  sections      Section[]
-  enrollments   Enrollment[]
-  certificates  Certificate[]
-  views         View[]
-  reviews       Review[]
-
-  @@index([creatorId])
-  @@index([isFeatured, activeFrom, activeTo])
-  @@index([rotationMonth])
-}
-
-model Section {
-  id             String     @id @default(cuid())
-  courseId       String
-  course         Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  title          String
-  content        String     @db.Text
-  order          Int
-  minTimeSeconds Int        @default(300)
-
-  // Content type support
-  contentType    String     @default("text") // text, video, pdf
-  videoUrl       String?
-  pdfUrl         String?
-  duration       Int?       // video duration in seconds
-
-  // Relations
-  questions      Question[]
-  progress       Progress[]
-}
-
-model Question {
-  id           String        @id @default(cuid())
-  sectionId    String?
-  section      Section?      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  courseId     String
-  questionText String        @db.Text
-  context      String?       @db.Text
-  optionA      String
-  optionB      String
-  optionC      String
-  optionD      String
-  // SECURITY: This field must NEVER be exposed to client-side code
-  correctAnswer String       // 'A', 'B', 'C', or 'D'
-  explanation  String?       @db.Text
-  order        Int
-
-  // Relations
-  attempts     QuizAttempt[]
-}
-
-model Enrollment {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId    String
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  enrolledAt  DateTime  @default(now())
-  completedAt DateTime?
-
-  @@unique([userId, courseId])
-}
-
-model Progress {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sectionId   String
-  section     Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  completed   Boolean   @default(false)
-  timeSpent   Int       @default(0) // in seconds
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
-
-  @@unique([userId, sectionId])
-}
-
-model QuizAttempt {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questionId    String
-  question      Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  answer        String   // 'A', 'B', 'C', or 'D'
-  isCorrect     Boolean
-  attemptNumber Int      @default(1)
-  timeSpent     Int?     // in milliseconds
-  createdAt     DateTime @default(now())
-
-  @@index([userId, questionId])
-}
-
-model Certificate {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId      String
-  course        Course   @relation(fields: [courseId], references: [id])
-  certificateId String   @unique // public certificate ID
-  score         Float    // percentage
-  issuedAt      DateTime @default(now())
-
-  @@unique([userId, courseId])
-}
-
-// Creator Application model
-model CreatorApplication {
-  id              String        @id @default(cuid())
-  userId          String
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Application details
-  motivation      String        @db.Text  // Why they want to be a creator
-  expertise       String        @db.Text  // Their expertise areas
-  experience      String        @db.Text  // Teaching/content creation experience
-  sampleContent   String?       // Link to sample work
-  cvUrl           String        // Required CV upload
-
-  // Review details
-  status          CreatorStatus @default(PENDING)
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  rejectionReason String?       @db.Text
-
-  createdAt       DateTime      @default(now())
-
-  @@index([userId])
-  @@index([status])
-}
-
-// Publication model (research papers)
-model Publication {
-  id            String   @id @default(cuid())
-  title         String
-  description   String   @db.Text
-  creatorId     String
-  creator       User     @relation(fields: [creatorId], references: [id])
-
-  fileUrl       String   // PDF URL
-  thumbnail     String?
-  doi           String?  // Digital Object Identifier
-  journal       String?
-  publishedDate DateTime?
-
-  // Metadata
-  keywords      String[] // Array of keywords
-  categoryId    String
-  category      Category @relation(fields: [categoryId], references: [id])
-
-  published     Boolean  @default(false)
-
-  // Analytics
-  totalViews    Int      @default(0)
-
-  // Content approval
-  submittedAt     DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?  @db.Text
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  views         View[]
-
-  @@index([creatorId])
-}
-
-// Follow system model
-model Follow {
-  id          String   @id @default(cuid())
-  followerId  String
-  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
-  followingId String
-  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-
-  @@unique([followerId, followingId])
-  @@index([followerId])
-  @@index([followingId])
-}
-
-// File upload tracking
-model FileUpload {
-  id          String   @id @default(cuid())
-  userId      String
-  fileName    String
-  fileUrl     String
-  fileType    String   // application/pdf, video/mp4, etc.
-  fileSize    Int      // bytes
-  uploadedAt  DateTime @default(now())
-
-  @@index([userId])
-}
-
-// Notification model
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  type      String   // "new_course", "new_follower", "course_published", etc.
-  title     String
-  message   String   @db.Text
-  link      String?
-  data      Json?    // Additional data for the notification
-  read      Boolean  @default(false)
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, read])
-  @@index([createdAt])
-}
-
-// View tracking model
-model View {
-  id            String   @id @default(cuid())
-  userId        String?  // nullable for anonymous views
-  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // What was viewed
-  courseId      String?
-  course        Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  publicationId String?
-  publication   Publication? @relation(fields: [publicationId], references: [id], onDelete: Cascade)
-
-  // Creator who gets credit
-  creatorId     String
-  creator       User     @relation("CreatorViews", fields: [creatorId], references: [id])
-
-  // Engagement metrics
-  duration      Int      @default(0) // seconds spent
-  completed     Boolean  @default(false)
-
-  // Tracking
-  ipAddress     String?
-  userAgent     String?
-  referrer      String?
-
-  createdAt     DateTime @default(now())
-
-  @@index([creatorId, createdAt])
-  @@index([courseId, createdAt])
-  @@index([userId, createdAt])
-}
-
-// Revenue tracking model
-model Revenue {
-  id              String   @id @default(cuid())
-
-  // Time period
-  month           Int      // 1-12
-  year            Int
-
-  // Platform totals
-  totalRevenue    Float    // Total ad revenue for this month
-  totalViews      Int      // Total views across all content
-  revenuePerView  Float    // Calculated: totalRevenue / totalViews
-
-  // Status
-  calculated      Boolean  @default(false)
-  calculatedAt    DateTime?
-
-  createdAt       DateTime @default(now())
-
-  creatorEarnings CreatorEarning[]
-
-  @@unique([year, month])
-  @@index([calculated])
-}
-
-// Creator earnings model
-model CreatorEarning {
-  id          String   @id @default(cuid())
-
-  revenueId   String
-  revenue     Revenue  @relation(fields: [revenueId], references: [id], onDelete: Cascade)
-
-  creatorId   String
-  creator     User     @relation(fields: [creatorId], references: [id])
-
-  // Creator's metrics
-  views       Int      // Creator's views this month
-  viewShare   Float    // Percentage of total views
-
-  // Earnings
-  grossEarnings Float  // Before platform fee
-  platformFee   Float  // 30% goes to platform
-  netEarnings   Float  // Creator receives this (70%)
-
-  // Payout
-  paid          Boolean  @default(false)
-  paidAt        DateTime?
-  payoutId      String?
-  payout        Payout?  @relation(fields: [payoutId], references: [id])
-
-  createdAt     DateTime @default(now())
-
-  @@unique([revenueId, creatorId])
-  @@index([creatorId, paid])
-}
-
-// Payout model
-model Payout {
-  id              String       @id @default(cuid())
-
-  creatorId       String
-  creator         User         @relation(fields: [creatorId], references: [id])
-
-  // Amount
-  amount          Float        // Amount in ZAR (South African Rands)
-  currency        String       @default("zar")
-
-  // Stripe
-  stripePayoutId  String?      @unique
-  stripeTransferId String?     @unique
-
-  // Status
-  status          PayoutStatus @default(PENDING)
-  failureReason   String?
-
-  // Earnings included
-  earnings        CreatorEarning[]
-
-  // Timestamps
-  initiatedAt     DateTime     @default(now())
-  completedAt     DateTime?
-  failedAt        DateTime?
-
-  @@index([creatorId, status])
-  @@index([status, initiatedAt])
-}
-
-// Review model
-model Review {
-  id          String   @id @default(cuid())
-
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  courseId    String
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  rating      Int      // 1-5 stars
-  title       String?
-  comment     String?  @db.Text
-
-  // Moderation
-  reported    Boolean  @default(false)
-  hidden      Boolean  @default(false)
-
-  // Engagement
-  helpful     Int      @default(0)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  responses   ReviewResponse[]
-
-  @@unique([userId, courseId]) // One review per user per course
-  @@index([courseId, rating])
-  @@index([createdAt])
-}
-
-// Review response model
-model ReviewResponse {
-  id        String   @id @default(cuid())
-
-  reviewId  String
-  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  creatorId String
-  creator   User     @relation(fields: [creatorId], references: [id])
-
-  comment   String   @db.Text
-
-  createdAt DateTime @default(now())
-
-  @@index([reviewId])
-}
-
-// DMCA Report model
-model DMCAReport {
-  id                  String      @id @default(cuid())
-
-  // Reporter information
-  reporterName        String
-  reporterEmail       String
-  reporterAddress     String      @db.Text
-  copyrightOwner      String      // Name of copyright owner if different
-
-  // Report details
-  workDescription     String      @db.Text
-  infringingUrl       String
-  goodFaithStatement  Boolean
-  accuracyStatement   Boolean
-  signature           String
-
-  // Content being reported
-  contentId           String?
-  contentType         String?     // "course" or "publication"
-
-  // Review
-  status              DMCAStatus  @default(PENDING)
-  reviewedAt          DateTime?
-  reviewedBy          String?
-  resolution          String?     @db.Text
-
-  createdAt           DateTime    @default(now())
-
-  @@index([status])
-  @@index([createdAt])
-}
-
-// User consent tracking
-model UserConsent {
-  id                  String      @id @default(cuid())
-  userId              String      @unique
-
-  // Terms & Privacy
-  termsAccepted       Boolean     @default(false)
-  termsAcceptedAt     DateTime?
-  privacyAccepted     Boolean     @default(false)
-  privacyAcceptedAt   DateTime?
-
-  // Age verification
-  ageVerified         Boolean     @default(false)
-  ageVerifiedAt       DateTime?
-
-  // Marketing
-  marketingEmails     Boolean     @default(false)
-  marketingEmailsAt   DateTime?
-
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-}
-
-// Data export requests
-model DataExportRequest {
-  id                  String      @id @default(cuid())
-  userId              String
-
-  status              String      @default("pending") // pending, processing, completed, failed
-  downloadUrl         String?
-  expiresAt           DateTime?
-
-  createdAt           DateTime    @default(now())
-  completedAt         DateTime?
-
-  @@index([userId])
-  @@index([status])
-}
-
-// Account deletion requests
-model AccountDeletionRequest {
-  id                  String      @id @default(cuid())
-  userId              String      @unique
-
-  reason              String?     @db.Text
-  status              String      @default("pending") // pending, approved, completed, cancelled
-  scheduledFor        DateTime?   // 90-day grace period
-
-  createdAt           DateTime    @default(now())
-  processedAt         DateTime?
-
-  @@index([status])
-  @@index([scheduledFor])
-}
-
-// Subscription Plans
-enum SubscriptionTier {
-  BASIC       // Access to basic courses
-  PROFESSIONAL // Access to all courses + extras
-  PREMIUM     // All courses + 1-on-1 support
+enum Role {
+  USER
+  ADMIN
+  INSTRUCTOR
+  CREATOR
 }
 
 enum SubscriptionStatus {
@@ -642,100 +576,8 @@ enum SubscriptionStatus {
   PAUSED
 }
 
-enum BillingInterval {
-  MONTHLY
-  YEARLY
-}
-
-model SubscriptionPlan {
-  id                String              @id @default(cuid())
-  name              String              @unique
-  tier              SubscriptionTier
-  description       String              @db.Text
-  features          Json                // Array of features included
-
-  // Pricing
-  monthlyPrice      Float               // Monthly price in ZAR
-  yearlyPrice       Float               // Annual price in ZAR (discounted)
-
-  // CPD Points
-  cpdPointsPerYear  Float               // How many CPD points this covers
-
-  // Course Access
-  courseAccessLevel String              @default("all") // "all", "featured", "basic"
-
-  active            Boolean             @default(true)
-  displayOrder      Int                 @default(0)
-
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  // Relations
-  subscriptions     Subscription[]
-}
-
-model Subscription {
-  id                String              @id @default(cuid())
-
-  userId            String
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  planId            String
-  plan              SubscriptionPlan    @relation(fields: [planId], references: [id])
-
-  // Billing
-  status            SubscriptionStatus  @default(ACTIVE)
-  billingInterval   BillingInterval
-  amount            Float               // Amount paid
-  currency          String              @default("zar")
-
-  // Stripe
-  stripeSubscriptionId String?          @unique
-  stripeCustomerId     String?
-
-  // Dates
-  startDate         DateTime            @default(now())
-  currentPeriodStart DateTime           @default(now())
-  currentPeriodEnd  DateTime
-  cancelAt          DateTime?
-  canceledAt        DateTime?
-  endedAt           DateTime?
-
-  // Auto-renewal
-  autoRenew         Boolean             @default(true)
-
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  @@index([userId, status])
-  @@index([status, currentPeriodEnd])
-  @@index([stripeSubscriptionId])
-}
-
-// Monthly Course Bundles - Curated collections that rotate monthly
-model MonthlyBundle {
-  id              String      @id @default(cuid())
-  name            String      // e.g., "January 2025 - Advanced Imaging"
-  description     String      @db.Text
-  month           Int         // 1-12
-  year            Int
-
-  // Bundle details
-  totalCpdHours   Float
-  courseIds       Json        // Array of course IDs in this bundle
-  thumbnail       String?
-
-  // Availability
-  activeFrom      DateTime
-  activeTo        DateTime
-  isCurrent       Boolean     @default(false)
-
-  // Pricing for one-time purchase of bundle
-  price           Float       @default(0)
-
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  @@unique([year, month])
-  @@index([isCurrent, activeFrom, activeTo])
+enum SubscriptionTier {
+  BASIC
+  PROFESSIONAL
+  PREMIUM
 }

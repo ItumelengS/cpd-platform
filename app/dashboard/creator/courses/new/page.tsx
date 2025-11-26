@@ -38,6 +38,7 @@ interface CourseFormData {
   description: string;
   difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
   cpdHours: number;
+  cpdContentType: 'CLINICAL' | 'ETHICS_HUMAN_RIGHTS_LAW';
   thumbnailUrl: string;
   sections: Section[];
   questions: Question[];
@@ -67,6 +68,7 @@ export default function NewCoursePage() {
     description: '',
     difficulty: 'BEGINNER',
     cpdHours: 1,
+    cpdContentType: 'CLINICAL',
     thumbnailUrl: '',
     sections: [],
     questions: [],
@@ -336,6 +338,23 @@ export default function NewCoursePage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              CPD Content Type * (HPCSA Compliance)
+            </label>
+            <select
+              value={formData.cpdContentType}
+              onChange={(e) => setFormData({ ...formData, cpdContentType: e.target.value as 'CLINICAL' | 'ETHICS_HUMAN_RIGHTS_LAW' })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="CLINICAL">Clinical / Professional Content</option>
+              <option value="ETHICS_HUMAN_RIGHTS_LAW">Ethics, Human Rights, or Health Law</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Select the primary content type as per HPCSA December 2024 guidelines
+            </p>
           </div>
 
           <FileUploader
@@ -651,6 +670,12 @@ export default function NewCoursePage() {
                 <div>
                   <dt className="text-sm font-medium text-gray-500">CPD Hours</dt>
                   <dd className="mt-1">{formData.cpdHours}</dd>
+                </div>
+                <div className="col-span-2">
+                  <dt className="text-sm font-medium text-gray-500">CPD Content Type</dt>
+                  <dd className="mt-1">
+                    {formData.cpdContentType === 'CLINICAL' ? 'Clinical / Professional Content' : 'Ethics, Human Rights, or Health Law'}
+                  </dd>
                 </div>
                 <div className="col-span-2">
                   <dt className="text-sm font-medium text-gray-500">Description</dt>

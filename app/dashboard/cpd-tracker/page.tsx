@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import CPDTrackerDashboard from "./CPDTrackerDashboard"
+import { getRequirements, areCEUsValid, areCEUsExpiringSoon } from "@/lib/hpcsa-requirements"
 
 export const metadata = {
   title: "CPD Tracker",
@@ -15,13 +16,31 @@ export default async function CPDTrackerPage() {
     redirect("/login")
   }
 
+  // Get user info including HPCSA profession
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      profession: true,
+      isInCommunityService: true,
+      isRegistrar: true,
+      cpdExemptUntil: true,
+    },
+  })
+
+  // Check if user is exempt from CPD
+  const isExempt = !!(user?.isInCommunityService || user?.isRegistrar ||
+                  (user?.cpdExemptUntil && user.cpdExemptUntil > new Date()))
+
+  // Get user's HPCSA requirements
+  const requirements = getRequirements(user?.profession || null)
+
   // Get current year
   const currentYear = new Date().getFullYear()
   const yearStart = new Date(currentYear, 0, 1)
   const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59)
 
-  // Get user's certificates for current year
-  const certificates = await prisma.certificate.findMany({
+  // Get user's certificates for current year (only valid CEUs as per Dec 2024 guidelines)
+  const allCertificates = await prisma.certificate.findMany({
     where: {
       userId: session.user.id,
       issuedAt: {
@@ -34,6 +53,7 @@ export default async function CPDTrackerPage() {
         select: {
           title: true,
           cpdHours: true,
+          cpdContentType: true,
           category: {
             select: {
               name: true,
@@ -48,29 +68,32 @@ export default async function CPDTrackerPage() {
     },
   })
 
-  // Calculate total CPD hours
-  const totalHours = certificates.reduce((sum, cert) => sum + cert.course.cpdHours, 0)
+  // Filter to only valid (non-expired) CEUs
+  const certificates = allCertificates.filter((cert) => areCEUsValid(cert.ceuExpiryDate))
+
+  // Find expiring and expired CEUs
+  const expiringCertificates = certificates.filter((cert) => areCEUsExpiringSoon(cert.ceuExpiryDate))
+  const expiredCertificates = allCertificates.filter((cert) => !areCEUsValid(cert.ceuExpiryDate))
+
+  // Calculate total CPD hours (clinical + ethics)
+  const totalHours = certificates.reduce((sum, cert) => sum + cert.ceuHours, 0)
+
+  // Calculate clinical CEUs
+  const clinicalHours = certificates
+    .filter((cert) => cert.contentType === 'CLINICAL')
+    .reduce((sum, cert) => sum + cert.ceuHours, 0)
+
+  // Calculate ethics CEUs
+  const ethicsHours = certificates
+    .filter((cert) => cert.contentType === 'ETHICS_HUMAN_RIGHTS_LAW')
+    .reduce((sum, cert) => sum + cert.ceuHours, 0)
 
   // Group hours by category
   const hoursByCategory: Record<string, number> = {}
   certificates.forEach((cert) => {
     const category = cert.course.category.name
-    hoursByCategory[category] = (hoursByCategory[category] || 0) + cert.course.cpdHours
+    hoursByCategory[category] = (hoursByCategory[category] || 0) + cert.ceuHours
   })
-
-  // Get user's subscription to check annual CPD hours target
-  const subscription = await prisma.subscription.findFirst({
-    where: {
-      userId: session.user.id,
-      status: 'ACTIVE',
-    },
-    include: {
-      plan: true,
-    },
-  })
-
-  // Determine annual target based on subscription or professional standards
-  const annualTarget = subscription?.plan?.cpdPointsPerYear || 20 // Default 20 hours
 
   // Get courses in progress (not yet completed)
   const enrollments = await prisma.enrollment.findMany({
@@ -160,12 +183,26 @@ export default async function CPDTrackerPage() {
   return (
     <CPDTrackerDashboard
       totalHours={totalHours}
-      annualTarget={annualTarget}
+      clinicalHours={clinicalHours}
+      ethicsHours={ethicsHours}
+      annualTarget={requirements.totalCEUs}
+      minClinicalTarget={requirements.minClinicalCEUs}
+      minEthicsTarget={requirements.minEthicsCEUs}
+      profession={requirements.profession}
       hoursByCategory={hoursByCategory}
       certificates={certificates}
+      expiringCertificates={expiringCertificates}
+      expiredCertificates={expiredCertificates}
       coursesInProgress={coursesInProgress}
       recommendedCourses={recommendedCourses}
       currentYear={currentYear}
+      isExempt={isExempt}
+      exemptReason={
+        user?.isInCommunityService ? "Community Service" :
+        user?.isRegistrar ? "Registrar Training" :
+        user?.cpdExemptUntil ? `Exempt until ${user.cpdExemptUntil.toLocaleDateString()}` :
+        null
+      }
     />
   )
 }

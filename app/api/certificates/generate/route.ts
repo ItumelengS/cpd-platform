@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { calculateCEUExpiryDate } from "@/lib/hpcsa-requirements"
 
 export async function POST(request: Request) {
   try {
@@ -106,13 +107,20 @@ export async function POST(request: Request) {
     const random = Math.random().toString(36).substring(2, 8).toUpperCase()
     const certificateId = `CERT-${timestamp}-${random}`
 
-    // 7. Create certificate
+    // 7. Create certificate with HPCSA compliance fields
+    const issuedAt = new Date()
+    const ceuExpiryDate = calculateCEUExpiryDate(issuedAt) // 12 months as per Dec 2024 guidelines
+
     const certificate = await prisma.certificate.create({
       data: {
         userId: session.user.id,
         courseId,
         certificateId,
         score,
+        issuedAt,
+        ceuExpiryDate,
+        ceuHours: enrollment.course.cpdHours,
+        contentType: enrollment.course.cpdContentType,
       },
       include: {
         course: true,

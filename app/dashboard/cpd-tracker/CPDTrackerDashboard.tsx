@@ -46,27 +46,52 @@ interface RecommendedCourse {
 
 interface CPDTrackerDashboardProps {
   totalHours: number
+  clinicalHours: number
+  ethicsHours: number
   annualTarget: number
+  minClinicalTarget: number
+  minEthicsTarget: number
+  profession: string
   hoursByCategory: Record<string, number>
   certificates: Certificate[]
+  expiringCertificates: Certificate[]
+  expiredCertificates: Certificate[]
   coursesInProgress: CourseInProgress[]
   recommendedCourses: RecommendedCourse[]
   currentYear: number
+  isExempt: boolean
+  exemptReason: string | null
 }
 
 export default function CPDTrackerDashboard({
   totalHours,
+  clinicalHours,
+  ethicsHours,
   annualTarget,
+  minClinicalTarget,
+  minEthicsTarget,
+  profession,
   hoursByCategory,
   certificates,
+  expiringCertificates,
+  expiredCertificates,
   coursesInProgress,
   recommendedCourses,
   currentYear,
+  isExempt,
+  exemptReason,
 }: CPDTrackerDashboardProps) {
   const [showAllCertificates, setShowAllCertificates] = useState(false)
 
   const progressPercentage = Math.min(Math.round((totalHours / annualTarget) * 100), 100)
   const remainingHours = Math.max(annualTarget - totalHours, 0)
+
+  // Calculate clinical and ethics progress
+  const clinicalProgressPercentage = Math.min(Math.round((clinicalHours / minClinicalTarget) * 100), 100)
+  const ethicsProgressPercentage = Math.min(Math.round((ethicsHours / minEthicsTarget) * 100), 100)
+
+  const remainingClinicalHours = Math.max(minClinicalTarget - clinicalHours, 0)
+  const remainingEthicsHours = Math.max(minEthicsTarget - ethicsHours, 0)
 
   const categoryColors: Record<string, string> = {
     "Medical Imaging": "bg-blue-500",
@@ -122,7 +147,9 @@ export default function CPDTrackerDashboard({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">CPD Tracker</h1>
-          <p className="text-gray-600 mt-1">Track your {currentYear} CPD hours and requirements</p>
+          <p className="text-gray-600 mt-1">
+            {profession} - Track your {currentYear} CPD requirements (HPCSA Dec 2024 Guidelines)
+          </p>
         </div>
         <button
           onClick={exportCPDReport}
@@ -135,37 +162,154 @@ export default function CPDTrackerDashboard({
         </button>
       </div>
 
+      {/* Exemption Notice */}
+      {isExempt && exemptReason && (
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+          <div className="flex items-center">
+            <svg className="w-6 h-6 text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-blue-800">
+                CPD Exemption: {exemptReason}
+              </p>
+              <p className="text-xs text-blue-700 mt-1">
+                You are currently exempt from CPD requirements as per HPCSA guidelines.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CEU Expiry Warnings */}
+      {!isExempt && expiringCertificates.length > 0 && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <div className="flex items-start">
+            <svg className="w-6 h-6 text-yellow-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-800">
+                {expiringCertificates.length} CEU{expiringCertificates.length !== 1 ? 's' : ''} expiring within 30 days
+              </p>
+              <p className="text-xs text-yellow-700 mt-1">
+                CEUs are valid for 12 months from completion date (HPCSA Dec 2024). Complete more courses to maintain your hours.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isExempt && expiredCertificates.length > 0 && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+          <div className="flex items-start">
+            <svg className="w-6 h-6 text-red-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">
+                {expiredCertificates.length} CEU{expiredCertificates.length !== 1 ? 's have' : ' has'} expired
+              </p>
+              <p className="text-xs text-red-700 mt-1">
+                These CEUs are no longer valid and don't count toward your annual requirement. Complete new courses to replace them.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Progress Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Hours */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-600">Total CPD Hours</h3>
+            <h3 className="text-sm font-medium text-gray-600">Total CEUs</h3>
             <span className="text-3xl">📊</span>
           </div>
           <div className="text-4xl font-bold text-gray-900">{totalHours}</div>
-          <p className="text-sm text-gray-500 mt-1">Earned in {currentYear}</p>
+          <p className="text-sm text-gray-500 mt-1">of {annualTarget} required</p>
         </div>
 
-        {/* Annual Target */}
+        {/* Clinical CEUs */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-600">Annual Target</h3>
-            <span className="text-3xl">🎯</span>
+            <h3 className="text-sm font-medium text-gray-600">Clinical CEUs</h3>
+            <span className="text-3xl">🏥</span>
           </div>
-          <div className="text-4xl font-bold text-gray-900">{annualTarget}</div>
-          <p className="text-sm text-gray-500 mt-1">Hours required</p>
+          <div className="text-4xl font-bold text-blue-600">{clinicalHours}</div>
+          <p className="text-sm text-gray-500 mt-1">
+            of {minClinicalTarget} required{" "}
+            {clinicalHours >= minClinicalTarget ? "✓" : `(${remainingClinicalHours} needed)`}
+          </p>
+        </div>
+
+        {/* Ethics CEUs */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-600">Ethics/HR/Law CEUs</h3>
+            <span className="text-3xl">⚖️</span>
+          </div>
+          <div className="text-4xl font-bold text-purple-600">{ethicsHours}</div>
+          <p className="text-sm text-gray-500 mt-1">
+            of {minEthicsTarget} required{" "}
+            {ethicsHours >= minEthicsTarget ? "✓" : `(${remainingEthicsHours} needed)`}
+          </p>
         </div>
 
         {/* Remaining */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-600">Remaining Hours</h3>
+            <h3 className="text-sm font-medium text-gray-600">Remaining CEUs</h3>
             <span className="text-3xl">{remainingHours === 0 ? "✅" : "⏱️"}</span>
           </div>
           <div className="text-4xl font-bold text-gray-900">{remainingHours}</div>
           <p className="text-sm text-gray-500 mt-1">
             {remainingHours === 0 ? "Target achieved!" : "To reach your goal"}
+          </p>
+        </div>
+      </div>
+
+      {/* Clinical vs Ethics Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Clinical Progress */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Clinical CEUs Progress</h3>
+            <span className="text-2xl font-bold text-blue-600">{clinicalProgressPercentage}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div
+              className={`h-4 rounded-full transition-all duration-500 ${
+                clinicalProgressPercentage >= 100 ? "bg-green-500" : "bg-blue-600"
+              }`}
+              style={{ width: `${clinicalProgressPercentage}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            {clinicalProgressPercentage >= 100
+              ? "Clinical CEU requirement met!"
+              : `${remainingClinicalHours} clinical CEUs remaining`}
+          </p>
+        </div>
+
+        {/* Ethics Progress */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Ethics/HR/Law CEUs Progress</h3>
+            <span className="text-2xl font-bold text-purple-600">{ethicsProgressPercentage}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div
+              className={`h-4 rounded-full transition-all duration-500 ${
+                ethicsProgressPercentage >= 100 ? "bg-green-500" : "bg-purple-600"
+              }`}
+              style={{ width: `${ethicsProgressPercentage}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            {ethicsProgressPercentage >= 100
+              ? "Ethics CEU requirement met!"
+              : `${remainingEthicsHours} ethics CEUs remaining`}
           </p>
         </div>
       </div>
